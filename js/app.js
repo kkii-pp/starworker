@@ -150,11 +150,16 @@ function renderMascots() {
 
 function applyStarImage() {
   const hero = $('#heroMascot');
-  const img = getStore('wb.starImage', null);
-  if (img) hero.innerHTML = `<img src="${img}" alt="我的星星人">`;
-  else hero.innerHTML = starSvg({ c1: '#ffd75e', c2: '#ffe9a8', emoji: '🧳' });
-  const p = getProfile();
-  $('#heroSub').textContent = p && p.name ? `${p.name}，今天也要元气满满 ✨` : '带上星星，出发吧 ✨';
+  if (hero) {
+    const img = getStore('wb.starImage', null);
+    if (img) hero.innerHTML = `<img src="${img}" alt="我的星星人">`;
+    else hero.innerHTML = starSvg({ c1: '#ffd75e', c2: '#ffe9a8', emoji: '🧳' });
+  }
+  const sub = $('#heroSub');
+  if (sub) {
+    const p = getProfile();
+    sub.textContent = p && p.name ? `${p.name}，今天也要元气满满 ✨` : '带上星星，出发吧 ✨';
+  }
 }
 
 /* ---------- 语音 ---------- */
@@ -239,6 +244,32 @@ function playAudioFile(urls, fallback, btn, rate) {
 
 /* ---------- 导航 ---------- */
 let currentMod = 'todo';
+const NAV_ITEMS = [
+  ['fortune', '每日运势', '🔮'],
+  ['todo', '每日待办', '✅'],
+  ['fitness', '运动饮食', '💪'],
+  ['english', '英语学习', '🌍'],
+  ['research', '科研灵感', '🔬'],
+  ['editing', '剪辑灵感', '✂️'],
+  ['media', '自媒体', '🚀'],
+  ['ledger', '记账', '💰'],
+  ['settings', '个人设置', '⚙️']
+];
+function navIcons() { return getStore('wb.navIcons', {}); }
+function saveNavIcons(o) { setStore('wb.navIcons', o); renderNav(); renderSettings(); }
+function renderNav() {
+  const nav = $('#nav');
+  if (!nav) return;
+  const icons = navIcons();
+  nav.innerHTML = NAV_ITEMS.map(([mod, name, def]) => {
+    const c = icons[mod] || {};
+    const icon = c.img
+      ? `<span class="nav-ico"><img src="${c.img}" alt=""></span>`
+      : `<span class="nav-ico">${c.emoji || def}</span>`;
+    return `<button class="nav-item ${currentMod === mod ? 'active' : ''}" data-mod="${mod}">${icon}<span>${name}</span></button>`;
+  }).join('');
+  $$('.nav-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
+}
 function showModule(mod) {
   currentMod = mod;
   $$('.module').forEach(s => s.classList.remove('active'));
@@ -1509,6 +1540,7 @@ function renderLedger() {
 function wishlist() { return getStore('wb.wishlist', []); }
 function saveWishlist(l) { setStore('wb.wishlist', l); renderSettings(); }
 let wlFilter = '全部';
+let customIconTarget = null;
 
 function goodsPlatform(u) {
   if (/douyin\.com|iesdouyin/i.test(u)) return '抖音';
@@ -1563,8 +1595,8 @@ function renderSettings() {
           <input class="input" type="number" id="setWeight" value="${(p && p.weight) || 60}" style="max-width:110px">
           <button class="btn btn-sm" id="setWeightBtn">保存</button></div>
       </div>
-      <div class="card">
-        <h3>⭐ 星星人头像（圆形）</h3>
+    <div class="card">
+      <h3>⭐ 星星人头像（圆形）</h3>
         <p class="hint" style="margin-bottom:10px">上传你自己的星星人图片后，顶部会用它替换默认形象（图片仅保存在本机浏览器）。</p>
         <div class="star-preview" id="starPreview">${star ? `<img src="${star}" alt="我的星星人">` : starSvg({ c1: '#ffd75e', c2: '#ffe9a8', emoji: '🧳' })}</div>
         <div class="btn-row" style="margin-top:10px">
@@ -1573,6 +1605,20 @@ function renderSettings() {
         </div>
         <input type="file" id="starFile" accept="image/*" hidden>
       </div>
+    </div>
+    <div class="card">
+      <h3>🎨 侧边栏图标 <span class="sub">每个菜单可自定义 emoji 或上传图片</span></h3>
+      ${NAV_ITEMS.map(([mod, name]) => {
+        const cur = (navIcons()[mod] || {});
+        const curTxt = cur.img ? '图片' : (cur.emoji ? 'emoji：' + cur.emoji : '默认');
+        return `<div class="set-row">
+          <span class="lbl">${esc(name)}<span class="sub">当前：${esc(curTxt)}</span></span>
+          <input class="input" data-ni="${mod}" placeholder="输入 emoji，如 🎯" value="${esc(cur.emoji || '')}" style="max-width:130px">
+          <button class="btn btn-sm" data-niu="${mod}">上传图片</button>
+          <button class="btn btn-sm btn-ghost" data-nir="${mod}">默认</button>
+        </div>`;
+      }).join('')}
+      <input type="file" id="navIconFile" accept="image/*" hidden>
     </div>
     <div class="card">
       <h3>🛍️ 心仪好物 <span class="sub">粘贴 抖音/小红书/拼多多/淘宝 链接，自动识别类别与金额</span></h3>
@@ -1646,6 +1692,47 @@ function renderSettings() {
     saveWishlist([item].concat(wishlist()));
     $('#wlUrl').value = ''; $('#wlName').value = ''; $('#wlPrice').value = '';
     toast(`已收藏心仪好物 ${wishCatIcon(item.cat)}`);
+  };
+  $$('[data-ni]').forEach(inp => inp.onchange = () => {
+    const o = navIcons();
+    const mod = inp.dataset.ni;
+    const v = inp.value.trim();
+    if (v) { o[mod] = { emoji: v }; } else { delete o[mod]; }
+    saveNavIcons(o);
+    toast('侧边栏图标已更新 🎨');
+  });
+  $$('[data-niu]').forEach(b => b.onclick = () => { customIconTarget = b.dataset.niu; $('#navIconFile').click(); });
+  $$('[data-nir]').forEach(b => b.onclick = () => {
+    const o = navIcons();
+    delete o[b.dataset.nir];
+    saveNavIcons(o);
+    toast('已恢复默认图标');
+  });
+  const navIconFile = $('#navIconFile');
+  if (navIconFile) navIconFile.onchange = e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file || !customIconTarget) return;
+    if (!file.type.startsWith('image/')) { toast('请选择图片文件'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const max = 96;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const o = navIcons();
+        o[customIconTarget] = { img: canvas.toDataURL('image/png') };
+        saveNavIcons(o);
+        customIconTarget = null;
+        toast('侧边栏图标已更新 🎨');
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
   };
   $('#setWaterBtn').onclick = () => {
     const q = Number($('#setWater').value);
@@ -1769,11 +1856,10 @@ function setDateBadges() {
 function init() {
   setDateBadges();
   renderMascots();
+  renderNav();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* 本地 http 环境忽略 */ });
   }
-
-  $$('.nav-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
 
   bindModalClose();
   $('#pfSave').onclick = () => {
