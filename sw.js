@@ -1,5 +1,5 @@
 /* 旅行星人工作台 · Service Worker（离线缓存 + App 体验） */
-const CACHE = 'travel-star-v2';
+const CACHE = 'travel-star-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -31,7 +31,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const path = new URL(e.request.url).pathname;
-  if (/\.(js|css)(\?|$)/.test(path)) {
+  if (e.request.mode === 'navigate' || /\.(js|css)(\?|$)/.test(path)) {
     e.respondWith(
       fetch(e.request)
         .then(res => {
