@@ -213,24 +213,28 @@ function playWord(word, btn) {
   }
 }
 
-/* 播放本地音频文件（真人语音 MP3），失败自动退回 fallback */
-function playAudioFile(url, fallback, btn, rate) {
-  try {
-    const a = new Audio(url);
-    a.preload = 'auto';
-    if (rate) a.playbackRate = rate;
-    let used = false;
-    const fb = () => { if (!used) { used = true; if (fallback) fallback(); } };
-    a.onerror = () => { if (btn) btn.classList.remove('speaking'); fb(); };
-    a.onended = () => { used = true; if (btn) btn.classList.remove('speaking'); };
-    if (btn) btn.classList.add('speaking');
-    const p = a.play();
-    if (p && p.catch) p.catch(fb);
-    return a;
-  } catch (e) {
-    if (fallback) fallback();
-    return null;
-  }
+/* 播放本地音频文件（真人语音 MP3）：依次尝试多个路径，全部失败才退回 fallback */
+function playAudioFile(urls, fallback, btn, rate) {
+  const list = Array.isArray(urls) ? urls : [urls];
+  const tryNext = i => {
+    if (i >= list.length) { if (fallback) fallback(); return null; }
+    try {
+      const a = new Audio(list[i]);
+      a.preload = 'auto';
+      if (rate) a.playbackRate = rate;
+      let used = false;
+      const fb = () => { if (!used) { used = true; tryNext(i + 1); } };
+      a.onerror = () => { if (btn) btn.classList.remove('speaking'); fb(); };
+      a.onended = () => { used = true; if (btn) btn.classList.remove('speaking'); };
+      if (btn) btn.classList.add('speaking');
+      const p = a.play();
+      if (p && p.catch) p.catch(fb);
+      return a;
+    } catch (e) {
+      return tryNext(i + 1);
+    }
+  };
+  return tryNext(0);
 }
 
 /* ---------- 导航 ---------- */
@@ -971,19 +975,19 @@ function renderEnglish() {
   const en = $('#body-english');
   $$('.tts-btn[data-w]', en).forEach(b => {
     const i = Number(b.dataset.w);
-    b.onclick = () => playAudioFile(`audio/d${pack.day}-w${i}.mp3`, () => playWord(pack.words[i].en, b), b);
+    b.onclick = () => playAudioFile([`audio/d${pack.day}-w${i}.mp3`, `d${pack.day}-w${i}.mp3`], () => playWord(pack.words[i].en, b), b);
   });
   $$('.tts-btn[data-clz]', en).forEach(b => {
     const i = Number(b.dataset.clz);
-    b.onclick = () => playAudioFile(`audio/d${pack.day}-c${i}.mp3`, () => speak(pack.cloze[i].s.replace(/\{[^}]+\}/g, '____'), 'en-US', b, st.rate), b, st.rate);
+    b.onclick = () => playAudioFile([`audio/d${pack.day}-c${i}.mp3`, `d${pack.day}-c${i}.mp3`], () => speak(pack.cloze[i].s.replace(/\{[^}]+\}/g, '____'), 'en-US', b, st.rate), b, st.rate);
   });
   $$('[data-qplay]', en).forEach(b => {
     const i = Number(b.dataset.qplay);
-    b.onclick = () => playAudioFile(`audio/d${pack.day}-q${i}.mp3`, () => speak(pack.quiz[i].q, 'en-US', b, st.rate), b, st.rate);
+    b.onclick = () => playAudioFile([`audio/d${pack.day}-q${i}.mp3`, `d${pack.day}-q${i}.mp3`], () => speak(pack.quiz[i].q, 'en-US', b, st.rate), b, st.rate);
   });
   $$('[data-sline]', en).forEach(b => {
     const i = Number(b.dataset.sline);
-    b.onclick = () => playAudioFile(`audio/d${pack.day}-s${i}.mp3`, () => speak(pack.speaking.lines[i].en, 'en-US', b, st.rate), b, st.rate);
+    b.onclick = () => playAudioFile([`audio/d${pack.day}-s${i}.mp3`, `d${pack.day}-s${i}.mp3`], () => speak(pack.speaking.lines[i].en, 'en-US', b, st.rate), b, st.rate);
   });
   $$('[data-learn]', en).forEach(b => b.onclick = () => {
     const s = engState(today);
@@ -1015,7 +1019,7 @@ function renderEnglish() {
       confetti();
     } else {
       $('#msg-' + i).innerHTML = '<span style="color:var(--danger)">再听一遍，注意字母拼写～</span>';
-      playAudioFile(`audio/d${pack.day}-c${i}.mp3`, () => speak(pack.cloze[i].s.replace(/\{[^}]+\}/g, '____'), 'en-US', null, Math.max(0.6, st.rate - 0.15)), null, st.rate);
+      playAudioFile([`audio/d${pack.day}-c${i}.mp3`, `d${pack.day}-c${i}.mp3`], () => speak(pack.cloze[i].s.replace(/\{[^}]+\}/g, '____'), 'en-US', null, Math.max(0.6, st.rate - 0.15)), null, st.rate);
     }
   });
   $$('[data-skip]', en).forEach(b => b.onclick = () => {
