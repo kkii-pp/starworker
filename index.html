@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c6cf0">
+<title>旅行星人工作台 · 个人每日工作台</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+<link rel="stylesheet" href="css/style.css?v=3">
+</head>
+<body>
+
+<!-- 背景装饰：太阳 / 云 / 山 -->
+<div class="bg-sky" aria-hidden="true">
+  <div class="sun"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+  <div class="mountains">
+    <div class="m m1"></div>
+    <div class="m m2"></div>
+    <div class="m m3"></div>
+  </div>
+  <div class="plane-path" aria-hidden="true"><span class="plane">✈️</span></div>
+</div>
+
+<!-- 顶栏 -->
+<header id="topbar">
+  <button id="menuBtn" class="icon-btn" aria-label="打开菜单">☰</button>
+  <div class="topbar-title"><span class="logo-star">⭐</span> 旅行星人工作台</div>
+  <div class="topbar-right">
+    <span id="topDate" class="top-date"></span>
+  </div>
+</header>
+
+<!-- 侧边栏 -->
+<div id="sidebarOverlay" class="overlay"></div>
+<aside id="sidebar">
+  <div class="sidebar-hero">
+    <div class="hero-mascot" id="heroMascot"></div>
+    <div class="hero-text">
+      <div class="hero-title">旅行星人工作台</div>
+      <div class="hero-sub" id="heroSub">带上星星，出发吧 ✨</div>
+    </div>
+    <button id="closeSidebar" class="icon-btn close-btn" aria-label="关闭菜单">✕</button>
+  </div>
+  <nav id="nav" class="nav">
+    <button class="nav-item active" data-mod="fortune"><span class="nav-ico">🔮</span><span>每日运势</span></button>
+    <button class="nav-item" data-mod="todo"><span class="nav-ico">✅</span><span>每日待办</span></button>
+    <button class="nav-item" data-mod="fitness"><span class="nav-ico">💪</span><span>运动饮食</span></button>
+    <button class="nav-item" data-mod="english"><span class="nav-ico">🌍</span><span>英语学习</span></button>
+    <button class="nav-item" data-mod="research"><span class="nav-ico">🔬</span><span>科研灵感</span></button>
+    <button class="nav-item" data-mod="editing"><span class="nav-ico">✂️</span><span>剪辑灵感</span></button>
+    <button class="nav-item" data-mod="media"><span class="nav-ico">🚀</span><span>自媒体</span></button>
+    <button class="nav-item" data-mod="ledger"><span class="nav-ico">💰</span><span>记账</span></button>
+    <button class="nav-item" data-mod="settings"><span class="nav-ico">⚙️</span><span>个人设置</span></button>
+  </nav>
+  <div class="sidebar-foot">
+    <div>本地服务 · 手机同 Wi-Fi 访问</div>
+    <div id="lanHint">启动 start.bat 查看地址</div>
+  </div>
+</aside>
+
+<!-- 主内容 -->
+<main id="main">
+
+  <!-- 1 每日运势 -->
+  <section class="module active" id="mod-fortune">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-fortune"></div>
+      <div class="mod-title">
+        <h2>每日运势</h2>
+        <span class="mod-desc">按你的八字排盘 · 每日自动更新</span>
+      </div>
+      <span class="date-badge" id="date-fortune"></span>
+    </div>
+    <div class="mod-body" id="body-fortune"></div>
+  </section>
+
+  <!-- 2 每日待办 -->
+  <section class="module" id="mod-todo">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-todo"></div>
+      <div class="mod-title">
+        <h2>每日待办</h2>
+        <span class="mod-desc">写下今天要做的事</span>
+      </div>
+      <span class="date-badge" id="date-todo"></span>
+    </div>
+    <div class="mod-body" id="body-todo"></div>
+  </section>
+
+  <!-- 3 运动饮食 -->
+  <section class="module" id="mod-fitness">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-fitness"></div>
+      <div class="mod-title">
+        <h2>运动饮食</h2>
+        <span class="mod-desc">健身参考视频 · 每日打卡 · 喝水</span>
+      </div>
+      <span class="date-badge" id="date-fitness"></span>
+    </div>
+    <div class="mod-body" id="body-fitness"></div>
+  </section>
+
+  <!-- 4 英语学习 -->
+  <section class="module" id="mod-english">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-english"></div>
+      <div class="mod-title">
+        <h2>英语学习</h2>
+        <span class="mod-desc">CET-6 趣味听力游戏 + 口语跟读</span>
+      </div>
+      <span class="date-badge" id="date-english"></span>
+    </div>
+    <div class="mod-body" id="body-english"></div>
+  </section>
+
+  <!-- 5 科研灵感 -->
+  <section class="module" id="mod-research">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-research"></div>
+      <div class="mod-title">
+        <h2>科研灵感</h2>
+        <span class="mod-desc">文献链接收藏 + 标签管理</span>
+      </div>
+      <span class="date-badge" id="date-research"></span>
+    </div>
+    <div class="mod-body" id="body-research"></div>
+  </section>
+
+  <!-- 6 剪辑灵感 -->
+  <section class="module" id="mod-editing">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-editing"></div>
+      <div class="mod-title">
+        <h2>剪辑灵感</h2>
+        <span class="mod-desc">抖音 / 小红书链接收藏 + 简易标签</span>
+      </div>
+      <span class="date-badge" id="date-editing"></span>
+    </div>
+    <div class="mod-body" id="body-editing"></div>
+  </section>
+
+  <!-- 7 自媒体工作台 -->
+  <section class="module" id="mod-media">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-media"></div>
+      <div class="mod-title">
+        <h2>自媒体工作台</h2>
+        <span class="mod-desc">发布计划提醒 · 数据记录与分析建议</span>
+      </div>
+      <span class="date-badge" id="date-media"></span>
+    </div>
+    <div class="mod-body" id="body-media"></div>
+  </section>
+
+  <!-- 8 记账 -->
+  <section class="module" id="mod-ledger">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-ledger"></div>
+      <div class="mod-title">
+        <h2>记账</h2>
+        <span class="mod-desc">收支记录 · 金额默认隐藏</span>
+      </div>
+      <span class="date-badge" id="date-ledger"></span>
+    </div>
+    <div class="mod-body" id="body-ledger"></div>
+  </section>
+
+  <!-- 9 个人设置 -->
+  <section class="module" id="mod-settings">
+    <div class="mod-head">
+      <div class="mod-mascot" id="mascot-settings"></div>
+      <div class="mod-title">
+        <h2>个人设置</h2>
+        <span class="mod-desc">八字资料 · 圆形头像 · 目标 · 数据</span>
+      </div>
+      <span class="date-badge" id="date-settings"></span>
+    </div>
+    <div class="mod-body" id="body-settings"></div>
+  </section>
+
+</main>
+
+<!-- 底部快捷导航（手机） -->
+<nav id="bottomNav">
+  <button class="bn-item active" data-mod="fortune"><span>🔮</span><small>运势</small></button>
+  <button class="bn-item" data-mod="todo"><span>✅</span><small>待办</small></button>
+  <button class="bn-item" data-mod="fitness"><span>💪</span><small>运动</small></button>
+  <button class="bn-item" data-mod="english"><span>🌍</span><small>英语</small></button>
+  <button class="bn-item" id="bnMore"><span>☰</span><small>更多</small></button>
+</nav>
+
+<!-- 弹窗 -->
+<div id="profileModal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h3>📋 我的八字资料</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="modal-body">
+      <p class="hint">填写出生信息后，每日运势会按你的八字自动排盘更新。</p>
+      <label class="field"><span>昵称</span><input id="pfName" type="text" placeholder="例如：小星"></label>
+      <label class="field"><span>出生日期（公历）</span><input id="pfBirth" type="date"></label>
+      <label class="field"><span>出生时间</span><input id="pfTime" type="time"></label>
+      <label class="field"><span>性别</span>
+        <select id="pfGender"><option value="男">男</option><option value="女">女</option></select>
+      </label>
+      <label class="field"><span>每日喝水目标 (ml)</span><input id="pfWater" type="number" min="500" max="6000" step="100" value="2000"></label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" data-close>取消</button>
+      <button class="btn btn-primary" id="pfSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal" hidden>
+  <div class="modal-card modal-sm">
+    <div class="modal-head"><h3 id="cfTitle">提示</h3></div>
+    <div class="modal-body"><p id="cfText"></p></div>
+    <div class="modal-foot">
+      <button class="btn" data-close>取消</button>
+      <button class="btn btn-danger" id="cfOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="js/lunar.min.js"></script>
+<script src="js/data.js?v=4"></script>
+<script src="js/app.js?v=11"></script>
+</body>
+</html>
