@@ -1,5 +1,6 @@
 /* ============ 基础 ============ */
 :root{
+  --sbw:244px;
   --bg:#f6f1e7;
   --card:#fffdf8;
   --card2:#fdf6ea;
@@ -84,7 +85,7 @@ img{max-width:100%}
 
 /* ============ 侧边栏 ============ */
 #sidebar{
-  position:fixed;top:0;left:0;bottom:0;width:244px;z-index:100;
+  position:fixed;top:0;left:0;bottom:0;width:var(--sbw);z-index:100;
   background:linear-gradient(180deg,#fffef9,#f9f1e2);
   border-right:1px solid var(--line);
   display:flex;flex-direction:column;
@@ -126,18 +127,10 @@ img{max-width:100%}
 }
 .overlay.show{opacity:1;pointer-events:auto}
 
-/* 侧边栏折叠（电脑版可关闭/重开） */
-.float-menu{display:none;position:fixed;top:calc(10px + env(safe-area-inset-top));left:10px;z-index:70}
-@media (min-width:921px){
-  body.sb-closed #sidebar{transform:translateX(-105%);box-shadow:none}
-  body.sb-closed #main{margin-left:0;padding-left:64px}
-  body.sb-closed .float-menu{display:inline-flex}
-}
-
 /* ============ 主内容 ============ */
 #main{
-  padding:0 16px 110px;
-  margin-left:244px;
+  padding:0 16px 24px;
+  margin-left:var(--sbw);
   max-width:1180px;
 }
 .module{display:none;animation:fadeUp .35s ease}
@@ -408,19 +401,6 @@ table.fin tr:last-child td{border-bottom:none}
 }
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
 
-/* ============ 底部导航 ============ */
-#bottomNav{
-  position:fixed;left:0;right:0;bottom:0;z-index:80;display:none;
-  background:rgba(255,253,248,.95);backdrop-filter:blur(12px);
-  border-top:1px solid var(--line);
-  padding:6px 8px calc(6px + env(safe-area-inset-bottom));
-  justify-content:space-around;
-}
-.bn-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 10px;border-radius:13px;font-size:11px;color:var(--ink2);min-width:58px}
-.bn-item span{font-size:19px;filter:grayscale(.35);opacity:.75;transition:all .16s}
-.bn-item.active{color:var(--brand);font-weight:800}
-.bn-item.active span{filter:none;opacity:1;transform:scale(1.12)}
-
 /* 星星人动画 */
 .star-body{transition:transform .3s}
 .mascot-hover:hover .star-body{transform:translateY(-4px) rotate(-3deg)}
@@ -430,18 +410,22 @@ table.fin tr:last-child td{border-bottom:none}
 
 /* ============ 响应式 ============ */
 @media (max-width:920px){
-  #sidebar{transform:translateX(-105%)}
-  #sidebar.open{transform:translateX(0)}
-  #main{margin-left:0;padding-bottom:96px}
-  #bottomNav{display:flex}
+  #main{padding:0 10px 20px}
   .mountains{top:240px}
 }
 @media (max-width:520px){
-  #main{padding:0 10px 96px}
+  :root{--sbw:78px}
+  #main{padding:0 8px 20px}
   .mod-head{padding:12px}
   .mod-mascot{width:48px;height:48px}
   .mod-title h2{font-size:17px}
   .date-badge{display:none}
+  .sidebar-hero{margin:10px 6px;padding:12px 4px;justify-content:center}
+  .hero-text{display:none}
+  .nav-item{padding:11px 2px;justify-content:center}
+  .nav-item .nav-ico{width:auto}
+  .nav-item span:not(.nav-ico){display:none}
+  .sidebar-foot{display:none}
   .fortune-hero .ganzhi{font-size:18px}
   .fortune-hero .bars{grid-template-columns:repeat(5,1fr)}
   .yi-ji{grid-template-columns:1fr}
