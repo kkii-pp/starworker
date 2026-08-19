@@ -1581,6 +1581,7 @@ function renderSettings() {
   const wl = wishlist();
   const wlTags = ['全部'].concat(WISH_CATS.map(c => c.key));
   const wlList = wlFilter === '全部' ? wl : wl.filter(x => x.cat === wlFilter);
+  const navIconOpen = getStore('wb.navIconPanel', false);
   box.innerHTML = `
     <div class="grid2">
       <div class="card">
@@ -1607,18 +1608,24 @@ function renderSettings() {
       </div>
     </div>
     <div class="card">
-      <h3>🎨 侧边栏图标 <span class="sub">每个菜单可自定义 emoji 或上传图片</span></h3>
-      ${NAV_ITEMS.map(([mod, name]) => {
-        const cur = (navIcons()[mod] || {});
-        const curTxt = cur.img ? '图片' : (cur.emoji ? 'emoji：' + cur.emoji : '默认');
-        return `<div class="set-row">
-          <span class="lbl">${esc(name)}<span class="sub">当前：${esc(curTxt)}</span></span>
-          <input class="input" data-ni="${mod}" placeholder="输入 emoji，如 🎯" value="${esc(cur.emoji || '')}" style="max-width:130px">
-          <button class="btn btn-sm" data-niu="${mod}">上传图片</button>
-          <button class="btn btn-sm btn-ghost" data-nir="${mod}">默认</button>
-        </div>`;
-      }).join('')}
-      <input type="file" id="navIconFile" accept="image/*" hidden>
+      <div class="pack-head" style="margin-bottom:0">
+        <h3>🎨 侧边栏图标 <span class="sub">${navIconOpen ? '正在设置中，点“收起”可隐藏' : '自定义每个菜单图标（点展开）'}</span></h3>
+        <button class="btn btn-sm" id="navIconToggle">${navIconOpen ? '收起 ▴' : '展开 ▾'}</button>
+      </div>
+      ${navIconOpen ? `
+        <div style="margin-top:10px">
+          ${NAV_ITEMS.map(([mod, name]) => {
+            const cur = (navIcons()[mod] || {});
+            const curTxt = cur.img ? '图片' : (cur.emoji ? 'emoji：' + cur.emoji : '默认');
+            return `<div class="set-row">
+              <span class="lbl">${esc(name)}<span class="sub">当前：${esc(curTxt)}</span></span>
+              <input class="input" data-ni="${mod}" placeholder="输入 emoji，如 🎯" value="${esc(cur.emoji || '')}" style="max-width:130px">
+              <button class="btn btn-sm" data-niu="${mod}">上传图片</button>
+              <button class="btn btn-sm btn-ghost" data-nir="${mod}">默认</button>
+            </div>`;
+          }).join('')}
+        </div>
+        <input type="file" id="navIconFile" accept="image/*" hidden>` : ''}
     </div>
     <div class="card">
       <h3>🛍️ 心仪好物 <span class="sub">粘贴 抖音/小红书/拼多多/淘宝 链接，自动识别类别与金额</span></h3>
@@ -1692,6 +1699,11 @@ function renderSettings() {
     saveWishlist([item].concat(wishlist()));
     $('#wlUrl').value = ''; $('#wlName').value = ''; $('#wlPrice').value = '';
     toast(`已收藏心仪好物 ${wishCatIcon(item.cat)}`);
+  };
+  const navIconToggle = $('#navIconToggle');
+  if (navIconToggle) navIconToggle.onclick = () => {
+    setStore('wb.navIconPanel', !getStore('wb.navIconPanel', false));
+    renderSettings();
   };
   $$('[data-ni]').forEach(inp => inp.onchange = () => {
     const o = navIcons();
