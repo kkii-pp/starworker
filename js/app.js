@@ -238,7 +238,7 @@ function playAudioFile(urls, fallback, btn, rate) {
 }
 
 /* ---------- 导航 ---------- */
-let currentMod = 'fortune';
+let currentMod = 'todo';
 function showModule(mod) {
   currentMod = mod;
   $$('.module').forEach(s => s.classList.remove('active'));
@@ -1670,7 +1670,8 @@ function importData(e) {
  * ========================================================= */
 function setDateBadges() {
   const d = dateCN();
-  $('#topDate').textContent = d;
+  const td = $('#topDate');
+  if (td) td.textContent = d;
   $$('.date-badge').forEach(el => el.textContent = d);
 }
 
@@ -1684,7 +1685,6 @@ function init() {
   $$('.nav-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
   $$('.bn-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
   $('#bnMore').onclick = openDrawer;
-  $('#menuBtn').onclick = openDrawer;
   $('#closeSidebar').onclick = closeDrawer;
   $('#sidebarOverlay').onclick = closeDrawer;
 

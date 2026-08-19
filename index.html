@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -29,15 +29,6 @@
   <div class="plane-path" aria-hidden="true"><span class="plane">✈️</span></div>
 </div>
 
-<!-- 顶栏 -->
-<header id="topbar">
-  <button id="menuBtn" class="icon-btn" aria-label="打开菜单">☰</button>
-  <div class="topbar-title"><span class="logo-star">⭐</span> 旅行星人工作台</div>
-  <div class="topbar-right">
-    <span id="topDate" class="top-date"></span>
-  </div>
-</header>
-
 <!-- 侧边栏 -->
 <div id="sidebarOverlay" class="overlay"></div>
 <aside id="sidebar">
@@ -50,8 +41,8 @@
     <button id="closeSidebar" class="icon-btn close-btn" aria-label="关闭菜单">✕</button>
   </div>
   <nav id="nav" class="nav">
-    <button class="nav-item active" data-mod="fortune"><span class="nav-ico">🔮</span><span>每日运势</span></button>
-    <button class="nav-item" data-mod="todo"><span class="nav-ico">✅</span><span>每日待办</span></button>
+    <button class="nav-item" data-mod="fortune"><span class="nav-ico">🔮</span><span>每日运势</span></button>
+    <button class="nav-item active" data-mod="todo"><span class="nav-ico">✅</span><span>每日待办</span></button>
     <button class="nav-item" data-mod="fitness"><span class="nav-ico">💪</span><span>运动饮食</span></button>
     <button class="nav-item" data-mod="english"><span class="nav-ico">🌍</span><span>英语学习</span></button>
     <button class="nav-item" data-mod="research"><span class="nav-ico">🔬</span><span>科研灵感</span></button>
@@ -70,7 +61,7 @@
 <main id="main">
 
   <!-- 1 每日运势 -->
-  <section class="module active" id="mod-fortune">
+  <section class="module" id="mod-fortune">
     <div class="mod-head">
       <div class="mod-mascot" id="mascot-fortune"></div>
       <div class="mod-title">
@@ -83,7 +74,7 @@
   </section>
 
   <!-- 2 每日待办 -->
-  <section class="module" id="mod-todo">
+  <section class="module active" id="mod-todo">
     <div class="mod-head">
       <div class="mod-mascot" id="mascot-todo"></div>
       <div class="mod-title">
@@ -190,8 +181,8 @@
 
 <!-- 底部快捷导航（手机） -->
 <nav id="bottomNav">
-  <button class="bn-item active" data-mod="fortune"><span>🔮</span><small>运势</small></button>
-  <button class="bn-item" data-mod="todo"><span>✅</span><small>待办</small></button>
+  <button class="bn-item" data-mod="fortune"><span>🔮</span><small>运势</small></button>
+  <button class="bn-item active" data-mod="todo"><span>✅</span><small>待办</small></button>
   <button class="bn-item" data-mod="fitness"><span>💪</span><small>运动</small></button>
   <button class="bn-item" data-mod="english"><span>🌍</span><small>英语</small></button>
   <button class="bn-item" id="bnMore"><span>☰</span><small>更多</small></button>
@@ -233,6 +224,6 @@
 
 <script src="js/lunar.min.js"></script>
 <script src="js/data.js?v=4"></script>
-<script src="js/app.js?v=12"></script>
+<script src="js/app.js?v=13"></script>
 </body>
 </html>

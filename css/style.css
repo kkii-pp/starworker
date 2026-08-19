@@ -75,17 +75,6 @@ img{max-width:100%}
 @keyframes sway{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
 @keyframes planefly{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
 
-/* ============ 顶栏 ============ */
-#topbar{
-  position:sticky;top:0;z-index:60;display:flex;align-items:center;gap:10px;
-  padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));
-  background:rgba(255,253,248,.86);backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--line);
-}
-.topbar-title{font-weight:700;font-size:17px;display:flex;align-items:center;gap:7px;flex:1}
-.logo-star{font-size:20px;animation:twinkle 2.2s ease-in-out infinite}
-@keyframes twinkle{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.18) rotate(14deg)}}
-.top-date{font-size:12.5px;color:var(--ink2);background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:999px}
 .icon-btn{
   width:38px;height:38px;border-radius:12px;background:#fff;border:1px solid var(--line);
   font-size:17px;display:inline-flex;align-items:center;justify-content:center;
@@ -139,7 +128,7 @@ img{max-width:100%}
 
 /* ============ 主内容 ============ */
 #main{
-  padding:18px 16px 110px;
+  padding:0 16px 110px;
   margin-left:244px;
   max-width:1180px;
 }
@@ -440,7 +429,7 @@ table.fin tr:last-child td{border-bottom:none}
   .mountains{top:240px}
 }
 @media (max-width:520px){
-  #main{padding:12px 10px 96px}
+  #main{padding:0 10px 96px}
   .mod-head{padding:12px}
   .mod-mascot{width:48px;height:48px}
   .mod-title h2{font-size:17px}
