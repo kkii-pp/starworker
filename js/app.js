@@ -244,36 +244,9 @@ function showModule(mod) {
   $$('.module').forEach(s => s.classList.remove('active'));
   $('#mod-' + mod).classList.add('active');
   $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.mod === mod));
-  $$('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.mod === mod));
-  closeDrawer();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (mod === 'media') { renderMedia(); checkDuePlans(); }
   if (mod === 'ledger') renderLedger();
-}
-function openDrawer() {
-  $('#sidebar').classList.add('open');
-  $('#sidebarOverlay').classList.add('show');
-}
-function closeDrawer() {
-  $('#sidebar').classList.remove('open');
-  $('#sidebarOverlay').classList.remove('show');
-}
-function isDesktop() { return window.innerWidth > 920; }
-function closeSidebarHandler() {
-  if (isDesktop()) {
-    document.body.classList.add('sb-closed');
-    setStore('wb.sidebarClosed', true);
-  } else {
-    closeDrawer();
-  }
-}
-function openSidebarHandler() {
-  if (isDesktop()) {
-    document.body.classList.remove('sb-closed');
-    setStore('wb.sidebarClosed', false);
-  } else {
-    openDrawer();
-  }
 }
 
 /* ---------- 资料 ---------- */
@@ -1801,22 +1774,6 @@ function init() {
   }
 
   $$('.nav-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
-  $$('.bn-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
-  $('#bnMore').onclick = openDrawer;
-  $('#closeSidebar').onclick = closeSidebarHandler;
-  $('#floatingMenuBtn').onclick = openSidebarHandler;
-  $('#sidebarOverlay').onclick = closeDrawer;
-  if (isDesktop() && getStore('wb.sidebarClosed', false)) document.body.classList.add('sb-closed');
-
-  /* 手机：从屏幕左边缘向右滑，打开侧边栏 */
-  let touchX = null;
-  document.addEventListener('touchstart', e => { touchX = e.changedTouches[0].clientX; }, { passive: true });
-  document.addEventListener('touchend', e => {
-    if (touchX == null) return;
-    const dx = e.changedTouches[0].clientX - touchX;
-    if (touchX < 24 && dx > 60 && !isDesktop()) openDrawer();
-    touchX = null;
-  }, { passive: true });
 
   bindModalClose();
   $('#pfSave').onclick = () => {
