@@ -396,7 +396,7 @@ function dailyFortune(profile) {
     lunar: `${today.getYearInChinese()}年${today.getMonthInChinese()}月${today.getDayInChinese()}`,
     ganzhiYear: today.getYearInGanZhi(),
     ganzhiMonth: today.getMonthInGanZhi(),
-    shengxiao: today.getYearShengXiao(),
+    shengxiao: zodiacOf(profile),
     xingzuo: bazi.solar.getXingZuo()
   };
 }
@@ -1516,10 +1516,49 @@ function renderLedger() {
 /* =========================================================
  * 9. 个人设置
  * ========================================================= */
+function wishlist() { return getStore('wb.wishlist', []); }
+function saveWishlist(l) { setStore('wb.wishlist', l); renderSettings(); }
+let wlFilter = '全部';
+
+function goodsPlatform(u) {
+  if (/douyin\.com|iesdouyin/i.test(u)) return '抖音';
+  if (/xiaohongshu\.com|xhslink/i.test(u)) return '小红书';
+  if (/yangkeduo\.com|pinduoduo\.com/i.test(u)) return '拼多多';
+  if (/taobao\.com|tmall\.com/i.test(u)) return '淘宝';
+  return '其他';
+}
+function goodsPlatformBadge(p) {
+  const map = { 抖音: 'src-badge', 小红书: 'src-badge xhs', 拼多多: 'src-badge bili', 淘宝: 'src-badge yt', 其他: 'src-badge other' };
+  return `<span class="${map[p] || 'src-badge other'}">${p}</span>`;
+}
+function wishCatIcon(key) {
+  const c = WISH_CATS.find(x => x.key === key);
+  return c ? c.icon : '🛍️';
+}
+function guessWishCat(name) {
+  const n = String(name || '').toLowerCase();
+  for (const [cat, kws] of Object.entries(WISH_KEYWORDS)) {
+    if (kws.some(k => n.includes(k.toLowerCase()))) return cat;
+  }
+  return '其他';
+}
+async function loadGoodsInfo(url) {
+  try {
+    const r = await fetch('/api/goods?url=' + encodeURIComponent(url));
+    const d = await r.json();
+    return d.ok && d.data ? d.data : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 function renderSettings() {
   const box = $('#body-settings');
   const p = getProfile();
   const star = getStore('wb.starImage', null);
+  const wl = wishlist();
+  const wlTags = ['全部'].concat(WISH_CATS.map(c => c.key));
+  const wlList = wlFilter === '全部' ? wl : wl.filter(x => x.cat === wlFilter);
   box.innerHTML = `
     <div class="grid2">
       <div class="card">
@@ -1546,6 +1585,35 @@ function renderSettings() {
       </div>
     </div>
     <div class="card">
+      <h3>🛍️ 心仪好物 <span class="sub">粘贴 抖音/小红书/拼多多/淘宝 链接，自动识别类别与金额</span></h3>
+      <div class="todo-add">
+        <input class="input" id="wlUrl" placeholder="粘贴好物链接" style="flex:2;min-width:180px">
+        <button class="btn btn-sm" id="wlDetect">🔍 识别</button>
+        <button class="btn btn-sm btn-primary" id="wlAdd">＋ 收藏</button>
+      </div>
+      <div class="todo-add" style="margin-top:8px">
+        <input class="input" id="wlName" placeholder="好物名称（识别后自动填）" style="flex:2;min-width:150px">
+        <input class="input" type="number" id="wlPrice" placeholder="金额 ¥（自动或手填）" style="max-width:130px">
+        <select class="select" id="wlCat">${WISH_CATS.map(c => `<option>${c.key}</option>`).join('')}</select>
+      </div>
+      <div class="tag-cloud">
+        ${wlTags.map(t => `<span class="pill ${wlFilter === t ? 'active' : ''}" data-wltag="${esc(t)}">${t === '全部' ? t : wishCatIcon(t) + ' ' + t}</span>`).join('')}
+      </div>
+      <div style="margin-top:10px">
+        ${wlList.length ? wlList.map(w => `
+          <div class="lib-card">
+            <div class="lt">${wishCatIcon(w.cat)} ${esc(w.name || '未命名好物')} ${goodsPlatformBadge(w.platform)}</div>
+            <div class="lm"><a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.url)}</a></div>
+            <div class="actions">
+              <span class="tag gold">${w.price != null ? '¥ ' + esc(String(w.price)) : '金额未填'}</span>
+              <span class="tag">${esc(w.cat || '其他')}</span>
+              <span class="muted" style="margin-left:auto">${esc(w.date || '')}</span>
+              <button class="btn btn-sm btn-ghost" data-wldel="${w.id}">🗑</button>
+            </div>
+          </div>`).join('') : '<p class="muted" style="text-align:center;padding:12px 0">还没有心仪好物，粘贴一条链接收藏吧 🛍️</p>'}
+      </div>
+    </div>
+    <div class="card">
       <h3>🗄️ 数据管理 <span class="sub">待办、喝水、学习记录等保存在浏览器本地</span></h3>
       <div class="btn-row">
         <button class="btn btn-sm" id="setExport">📤 导出数据</button>
@@ -1556,6 +1624,39 @@ function renderSettings() {
       <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 手机访问：和电脑连同一 Wi-Fi，启动 start.bat 后用手机浏览器打开显示的网址（或扫 outputs 里的二维码）。</p>
     </div>`;
   $('#setProfile').onclick = openProfileModal;
+  $$('[data-wltag]').forEach(t => t.onclick = () => { wlFilter = t.dataset.wltag; renderSettings(); });
+  $$('[data-wldel]').forEach(b => b.onclick = () => saveWishlist(wishlist().filter(x => x.id !== b.dataset.wldel)));
+  $('#wlDetect').onclick = async () => {
+    const url = $('#wlUrl').value.trim();
+    if (!url) { toast('先粘贴好物链接'); return; }
+    const info = await loadGoodsInfo(url);
+    if (info && (info.title || info.price != null)) {
+      if (info.title) $('#wlName').value = info.title;
+      if (info.price != null) $('#wlPrice').value = info.price;
+      const cat = guessWishCat($('#wlName').value);
+      $('#wlCat').value = cat;
+      toast(info.price != null ? `已识别：¥ ${info.price} · ${cat}` : '已识别名称，金额请手填');
+    } else {
+      toast('没能自动识别（永久网站需手动填写；本地版可自动识别）');
+    }
+  };
+  $('#wlAdd').onclick = () => {
+    const url = $('#wlUrl').value.trim();
+    if (!url) { toast('请粘贴好物链接'); return; }
+    const priceV = $('#wlPrice').value.trim();
+    const item = {
+      id: uid(),
+      url,
+      platform: goodsPlatform(url),
+      name: $('#wlName').value.trim(),
+      price: priceV === '' ? null : Number(priceV),
+      cat: $('#wlCat').value,
+      date: todayStr()
+    };
+    saveWishlist([item].concat(wishlist()));
+    $('#wlUrl').value = ''; $('#wlName').value = ''; $('#wlPrice').value = '';
+    toast(`已收藏心仪好物 ${wishCatIcon(item.cat)}`);
+  };
   $('#setWaterBtn').onclick = () => {
     const q = Number($('#setWater').value);
     if (!q || q < 500) { toast('目标需 ≥ 500ml'); return; }
