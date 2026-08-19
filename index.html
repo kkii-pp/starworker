@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 
@@ -30,7 +30,6 @@
 </div>
 
 <!-- 侧边栏 -->
-<div id="sidebarOverlay" class="overlay"></div>
 <aside id="sidebar">
   <div class="sidebar-hero">
     <div class="hero-mascot" id="heroMascot"></div>
@@ -38,7 +37,6 @@
       <div class="hero-title">旅行星人工作台</div>
       <div class="hero-sub" id="heroSub">带上星星，出发吧 ✨</div>
     </div>
-    <button id="closeSidebar" class="icon-btn close-btn" aria-label="关闭菜单">✕</button>
   </div>
   <nav id="nav" class="nav">
     <button class="nav-item" data-mod="fortune"><span class="nav-ico">🔮</span><span>每日运势</span></button>
@@ -58,8 +56,6 @@
 </aside>
 
 <!-- 侧边栏折叠后（电脑）的重新打开按钮 -->
-<button id="floatingMenuBtn" class="icon-btn float-menu" aria-label="打开菜单">☰</button>
-
 <!-- 主内容 -->
 <main id="main">
 
@@ -183,14 +179,6 @@
 </main>
 
 <!-- 底部快捷导航（手机） -->
-<nav id="bottomNav">
-  <button class="bn-item" data-mod="fortune"><span>🔮</span><small>运势</small></button>
-  <button class="bn-item active" data-mod="todo"><span>✅</span><small>待办</small></button>
-  <button class="bn-item" data-mod="fitness"><span>💪</span><small>运动</small></button>
-  <button class="bn-item" data-mod="english"><span>🌍</span><small>英语</small></button>
-  <button class="bn-item" id="bnMore"><span>☰</span><small>更多</small></button>
-</nav>
-
 <!-- 弹窗 -->
 <div id="profileModal" class="modal" hidden>
   <div class="modal-card">
@@ -227,6 +215,6 @@
 
 <script src="js/lunar.min.js"></script>
 <script src="js/data.js?v=5"></script>
-<script src="js/app.js?v=15"></script>
+<script src="js/app.js?v=16"></script>
 </body>
 </html>
