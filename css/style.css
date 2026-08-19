@@ -39,42 +39,27 @@ img{max-width:100%}
 /* ============ 背景装饰 ============ */
 .bg-sky{
   position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
-  background:linear-gradient(180deg,var(--sky1) 0%,#eaf7ff 34%,var(--bg) 78%);
+  background:linear-gradient(180deg,#fdf8ef 0%,#f8f1e5 48%,#f2ead8 100%);
 }
 .sun{
-  position:absolute;top:18px;right:8vw;width:64px;height:64px;border-radius:50%;
-  background:radial-gradient(circle at 38% 34%,#fff3c4,#ffd75e 62%,#ffb93e);
-  box-shadow:0 0 46px 16px rgba(255,214,94,.55);
-  animation:sunfloat 7s ease-in-out infinite;
+  position:absolute;top:4vh;right:6vw;width:130px;height:130px;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%,rgba(255,238,190,.95),rgba(255,207,125,.55) 58%,transparent 72%);
+  filter:blur(3px);
 }
 .cloud{
   position:absolute;border-radius:999px;background:rgba(255,255,255,.85);
-  filter:blur(.2px);opacity:.9;
+  filter:blur(22px);opacity:.85;
 }
-.cloud::before,.cloud::after{content:"";position:absolute;border-radius:50%;background:inherit}
-.c1{top:70px;left:-40px;width:130px;height:42px;animation:drift 38s linear infinite}
-.c1::before{width:52px;height:52px;top:-26px;left:22px}
-.c1::after{width:40px;height:40px;top:-16px;left:70px}
-.c2{top:150px;left:52%;width:100px;height:32px;animation:drift 52s linear infinite}
-.c2::before{width:42px;height:42px;top:-21px;left:18px}
-.c2::after{width:32px;height:32px;top:-13px;left:56px}
-.c3{top:34px;left:26%;width:86px;height:28px;animation:drift 45s linear infinite}
-.c3::before{width:36px;height:36px;top:-18px;left:16px}
-.c3::after{width:28px;height:28px;top:-11px;left:48px}
-.mountains{position:absolute;top:190px;left:0;right:0;height:120px}
-.m{position:absolute;bottom:0;opacity:.45}
-.m1{left:-8%;width:46vw;height:110px;background:linear-gradient(180deg,#cfe8c0,#a9d39b);clip-path:polygon(0 100%,50% 0,100% 100%);animation:sway 9s ease-in-out infinite}
-.m2{left:28%;width:50vw;height:130px;background:linear-gradient(180deg,#bcd9e8,#8fbdd8);clip-path:polygon(0 100%,50% 6%,100% 100%);animation:sway 11s ease-in-out infinite}
-.m3{left:60%;width:42vw;height:96px;background:linear-gradient(180deg,#f3d9b0,#e0bc87);clip-path:polygon(0 100%,50% 0,100% 100%);animation:sway 10s ease-in-out infinite}
-.plane-path{
-  position:absolute;top:118px;left:-60px;width:52vw;border-top:2.5px dashed rgba(124,108,240,.45);
-  transform:rotate(-4deg);
-}
-.plane{position:absolute;top:-17px;right:-24px;font-size:24px;animation:planefly 6s ease-in-out infinite}
-@keyframes sunfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
-@keyframes drift{from{transform:translateX(0)}to{transform:translateX(110vw)}}
-@keyframes sway{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
-@keyframes planefly{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+.c1{top:5vh;left:3vw;width:240px;height:72px;background:rgba(255,224,190,.6)}
+.c2{top:20vh;right:4vw;width:210px;height:64px;background:rgba(190,224,255,.55)}
+.c3{top:38vh;left:22vw;width:190px;height:58px;background:rgba(228,214,255,.55)}
+.mountains{position:absolute;left:-5%;right:-5%;bottom:-3vh;height:26vh;opacity:.75}
+.m{position:absolute;bottom:0;filter:blur(4px)}
+.m1{left:-6%;width:50vw;height:24vh;background:linear-gradient(180deg,rgba(207,232,192,.65),rgba(169,211,155,.45));clip-path:polygon(0 100%,50% 0,100% 100%)}
+.m2{left:24%;width:54vw;height:29vh;background:linear-gradient(180deg,rgba(188,217,232,.6),rgba(143,189,216,.4));clip-path:polygon(0 100%,50% 6%,100% 100%)}
+.m3{left:58%;width:44vw;height:20vh;background:linear-gradient(180deg,rgba(243,217,176,.65),rgba(224,188,135,.45));clip-path:polygon(0 100%,50% 0,100% 100%)}
+.plane-path{display:none}
+.plane{display:none}
 
 .icon-btn{
   width:38px;height:38px;border-radius:12px;background:#fff;border:1px solid var(--line);
@@ -113,6 +98,10 @@ img{max-width:100%}
 }
 .nav-item .nav-ico{font-size:22px;width:auto;text-align:center;line-height:1}
 .nav-item .nav-ico img{width:26px;height:26px;object-fit:contain;border-radius:8px}
+.nav-item span:not(.nav-ico){
+  font-family:"Yuanti SC","YouYuan","幼圆","PingFang SC","Microsoft YaHei",sans-serif;
+  font-weight:700;letter-spacing:1px;line-height:1.35;
+}
 .nav-item:hover{background:#fff;color:var(--ink)}
 .nav-item.active{
   background:linear-gradient(135deg,#7c6cf0,#5b8def);color:#fff;
@@ -424,8 +413,8 @@ table.fin tr:last-child td{border-bottom:none}
   .sidebar-hero{margin:10px 6px;padding:12px 4px;justify-content:center}
   .hero-text{display:none}
   .nav-item{padding:11px 2px;justify-content:center}
-  .nav-item .nav-ico{width:auto}
-  .nav-item span:not(.nav-ico){display:none}
+  .nav-item .nav-ico{font-size:20px}
+  .nav-item span:not(.nav-ico){display:block;font-size:9px;letter-spacing:0;white-space:nowrap}
   .sidebar-foot{display:none}
   .fortune-hero .ganzhi{font-size:18px}
   .fortune-hero .bars{grid-template-columns:repeat(5,1fr)}
