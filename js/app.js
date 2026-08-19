@@ -157,8 +157,7 @@ function applyStarImage() {
   }
   const sub = $('#heroSub');
   if (sub) {
-    const p = getProfile();
-    sub.textContent = p && p.name ? `${p.name}，今天也要元气满满 ✨` : '带上星星，出发吧 ✨';
+    sub.textContent = '布灵布灵';
   }
 }
 
