@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 
@@ -48,6 +48,11 @@
 <!-- 主内容 -->
 <main id="main">
 
+  <!-- 0 个人首页 -->
+  <section class="module active" id="mod-home">
+    <div class="mod-body" id="body-home"></div>
+  </section>
+
   <!-- 1 每日运势 -->
   <section class="module" id="mod-fortune">
     <div class="mod-head">
@@ -62,7 +67,7 @@
   </section>
 
   <!-- 2 每日待办 -->
-  <section class="module active" id="mod-todo">
+  <section class="module" id="mod-todo">
     <div class="mod-head">
       <div class="mod-mascot" id="mascot-todo"></div>
       <div class="mod-title">
@@ -204,6 +209,6 @@
 
 <script src="js/lunar.min.js"></script>
 <script src="js/data.js?v=5"></script>
-<script src="js/app.js?v=19"></script>
+<script src="js/app.js?v=21"></script>
 </body>
 </html>
