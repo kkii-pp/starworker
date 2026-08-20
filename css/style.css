@@ -170,15 +170,34 @@ img{max-width:100%}
 }
 
 /* ============ 个人首页 ============ */
-.home-top{padding:8px 2px 6px}
+.home-top{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:33vh;padding:12px 2px 6px;text-align:center;
+}
 .home-greet{
   font-family:"Yuanti SC","YouYuan","幼圆","PingFang SC","Microsoft YaHei",sans-serif;
-  font-size:18px;font-weight:800;letter-spacing:1px;color:#6b5bd6;
+  font-size:18px;font-weight:800;letter-spacing:1px;color:#4d4752;
 }
-.home-time{font-size:56px;font-weight:300;color:var(--ink);line-height:1.15;font-variant-numeric:tabular-nums;margin-top:2px}
+.home-time{font-size:56px;font-weight:700;color:var(--ink);line-height:1.15;font-variant-numeric:tabular-nums;margin-top:2px}
 .home-date{font-size:14px;color:var(--ink2);margin-top:4px}
+.home-avatar-btn{
+  position:absolute;top:10px;right:10px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:none;border:none;padding:0;
+}
+.home-avatar-btn .ha{
+  width:46px;height:46px;border-radius:50%;overflow:hidden;display:block;
+  border:2px solid #d8d3cb;background:#fff;box-shadow:0 2px 8px rgba(90,80,70,.12);
+}
+.home-avatar-btn .ha img,.home-avatar-btn .ha svg{width:100%;height:100%;object-fit:contain}
+.home-avatar-btn small{font-size:10px;color:#b9b2a7;font-weight:600;letter-spacing:1px}
 .home-h3{font-size:16px;font-weight:800;margin:20px 0 10px}
 .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.home-tasks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.task-mini{
+  display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:12px;
+  background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);min-width:0;
+}
+.task-mini .tt{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .checkin-card{
   position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;
   padding:14px 10px;border-radius:16px;background:#fff;border:1.5px solid var(--line);
@@ -475,9 +494,16 @@ table.fin tr:last-child td{border-bottom:none}
   .grid2{grid-template-columns:1fr}
   .stat-cards{grid-template-columns:repeat(2,1fr)}
   .home-greet{font-size:15px}
-  .home-time{font-size:44px}
+  .home-top{min-height:30vh}
+  .home-time{font-size:40px}
   .home-date{font-size:12.5px}
+  .home-avatar-btn{top:6px;right:6px}
+  .home-avatar-btn .ha{width:38px;height:38px}
+  .home-avatar-btn small{font-size:9px}
   .home-h3{font-size:14px;margin:14px 0 8px}
+  .home-tasks{gap:6px}
+  .task-mini{padding:6px 8px}
+  .task-mini .tt{font-size:11.5px}
   .checkin-card{padding:10px 6px;gap:3px;border-radius:14px}
   .checkin-card .ci{font-size:24px}
   .checkin-card .cn{font-size:12.5px}
