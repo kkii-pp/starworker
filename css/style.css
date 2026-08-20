@@ -78,13 +78,13 @@ img{max-width:100%}
 .sidebar-user{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 10px 8px}
 .su-avatar{
   width:58px;height:58px;border-radius:50%;overflow:hidden;flex:none;
-  background:#f3edff;border:2.5px solid var(--brand);
-  box-shadow:0 4px 14px rgba(124,108,240,.28);
+  background:#f3edff;border:2.5px solid #d8d3cb;
+  box-shadow:0 4px 14px rgba(90,80,70,.12);
 }
 .su-avatar img,.su-avatar svg{width:100%;height:100%;object-fit:contain}
 .su-name{
   font-family:"Yuanti SC","YouYuan","幼圆","PingFang SC","Microsoft YaHei",sans-serif;
-  font-size:12px;font-weight:800;letter-spacing:2px;color:var(--brand);
+  font-size:12px;font-weight:800;letter-spacing:2px;color:#b9b2a7;
 }
 
 .icon-btn{
@@ -124,6 +124,8 @@ img{max-width:100%}
 }
 .nav-item .nav-ico{font-size:22px;width:auto;text-align:center;line-height:1}
 .nav-item .nav-ico img{width:26px;height:26px;object-fit:contain;border-radius:8px}
+.nav-item .nav-ico img.nav-avatar{border-radius:50%}
+.nav-item .nav-ico.nav-avatar-svg svg{width:26px;height:26px;border-radius:50%;background:#fff}
 .nav-item span:not(.nav-ico){
   font-family:"Yuanti SC","YouYuan","幼圆","PingFang SC","Microsoft YaHei",sans-serif;
   font-weight:700;letter-spacing:1px;line-height:1.35;
@@ -166,6 +168,28 @@ img{max-width:100%}
   margin-left:auto;font-size:11.5px;color:var(--ink2);background:var(--bg);
   border:1px solid var(--line);padding:5px 10px;border-radius:999px;white-space:nowrap;
 }
+
+/* ============ 个人首页 ============ */
+.home-top{padding:8px 2px 6px}
+.home-greet{
+  font-family:"Yuanti SC","YouYuan","幼圆","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:18px;font-weight:800;letter-spacing:1px;color:#6b5bd6;
+}
+.home-time{font-size:56px;font-weight:300;color:var(--ink);line-height:1.15;font-variant-numeric:tabular-nums;margin-top:2px}
+.home-date{font-size:14px;color:var(--ink2);margin-top:4px}
+.home-h3{font-size:16px;font-weight:800;margin:20px 0 10px}
+.home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.checkin-card{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:14px 10px;border-radius:16px;background:#fff;border:1.5px solid var(--line);
+  box-shadow:var(--shadow);transition:all .15s;
+}
+.checkin-card:active{transform:scale(.97)}
+.checkin-card .ci{font-size:30px;line-height:1}
+.checkin-card .cn{font-weight:800;font-size:14px}
+.checkin-card .ch{font-size:11px;color:var(--ink2)}
+.checkin-card.done{border-color:var(--ok);background:#eafaf0}
+.checkin-card .tick{position:absolute;top:8px;right:10px;color:var(--ok);font-weight:800;font-size:16px}
 
 /* ============ 卡片与通用 ============ */
 .card{
@@ -450,6 +474,30 @@ table.fin tr:last-child td{border-bottom:none}
   .yi-ji{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
   .stat-cards{grid-template-columns:repeat(2,1fr)}
+  .home-greet{font-size:15px}
+  .home-time{font-size:44px}
+  .home-date{font-size:12.5px}
+  .home-h3{font-size:14px;margin:14px 0 8px}
+  .checkin-card{padding:10px 6px;gap:3px;border-radius:14px}
+  .checkin-card .ci{font-size:24px}
+  .checkin-card .cn{font-size:12.5px}
+  .checkin-card .ch{font-size:10px}
+  .mod-desc{font-size:11px}
+  .mod-title h2{font-size:15px}
+  .card h3{font-size:13px;margin-bottom:6px}
+  .card h3 .sub{display:block;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card .sub{font-size:11px}
+  .todo-text{font-size:13px}
+  .word-item .en{font-size:14px}
+  .word-item .ph{font-size:10.5px}
+  .word-item .cn{font-size:12px}
+  .ex-row .name{font-size:13px}
+  .lib-card .lt{font-size:13px}
+  .ledger-row{font-size:12.5px}
+  .pack-title{font-size:15px}
+  .game-box .gs{font-size:12.5px}
+  .btn-sm{padding:4px 8px;font-size:11.5px}
+  .input,.select{font-size:13px;padding:8px 10px}
 }
 
 /* ============ v2 新模块样式 ============ */
