@@ -1791,6 +1791,45 @@ async function loadGoodsInfo(url) {
   }
 }
 
+/* ---------- 内容背景自定义 ---------- */
+function bgImage() { return getStore('wb.bgImage', null); }
+function applyBgImage() {
+  const layer = $('.bg-sky');
+  if (!layer) return;
+  const bg = bgImage();
+  if (bg && bg.src) {
+    layer.style.backgroundImage = 'url("' + bg.src + '")';
+    document.body.classList.add('custom-bg');
+  } else {
+    layer.style.backgroundImage = '';
+    document.body.classList.remove('custom-bg');
+  }
+}
+function uploadBgImage(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('请选择图片文件'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const max = 1920;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      setStore('wb.bgImage', { src: canvas.toDataURL('image/jpeg', 0.88) });
+      applyBgImage();
+      renderSettings();
+      toast('背景图片已应用 🖼️');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function renderSettings() {
   const box = $('#body-settings');
   const p = getProfile();
@@ -1823,6 +1862,17 @@ function renderSettings() {
         </div>
         <input type="file" id="starFile" accept="image/*" hidden>
       </div>
+    </div>
+    <div class="card">
+      <h3>🖼️ 内容背景 <span class="sub">给右侧内容区设置自己的背景图片（手机/电脑通用）</span></h3>
+      <div class="todo-add">
+        <input class="input" id="bgUrl" placeholder="粘贴图片链接（https://…）" value="${esc((bgImage() || {}).src || '')}" style="flex:2;min-width:160px">
+        <button class="btn btn-sm" id="bgApplyUrl">应用链接</button>
+        <button class="btn btn-sm" id="bgUploadBtn">上传图片</button>
+        <button class="btn btn-sm btn-ghost" id="bgClear">恢复水彩默认</button>
+      </div>
+      <input type="file" id="bgFile" accept="image/*" hidden>
+      <p class="rss-note" style="margin-top:8px">电脑右侧背景尺寸 ≈（屏幕宽度 − 244）× 屏幕高度；1920×1080 屏约为 1676×1080，建议上传 ≥1920×1080 的图，会自动铺满居中。</p>
     </div>
     <div class="card">
       <div class="pack-head" style="margin-bottom:0">
@@ -1899,6 +1949,22 @@ function renderSettings() {
       <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 手机访问：和电脑连同一 Wi-Fi，启动 start.bat 后用手机浏览器打开显示的网址（或扫 outputs 里的二维码）。</p>
     </div>`;
   $('#setProfile').onclick = openProfileModal;
+  $('#bgApplyUrl').onclick = () => {
+    const url = $('#bgUrl').value.trim();
+    if (!url) { toast('请输入图片链接'); return; }
+    setStore('wb.bgImage', { src: url });
+    applyBgImage();
+    renderSettings();
+    toast('背景已应用 🖼️');
+  };
+  $('#bgUploadBtn').onclick = () => $('#bgFile').click();
+  $('#bgFile').onchange = uploadBgImage;
+  $('#bgClear').onclick = () => {
+    localStorage.removeItem('wb.bgImage');
+    applyBgImage();
+    renderSettings();
+    toast('已恢复水彩默认背景');
+  };
   $('#syncSave').onclick = () => {
     const c = syncCfg();
     c.owner = $('#syncOwner').value.trim();
@@ -2111,6 +2177,7 @@ function setDateBadges() {
 function init() {
   setDateBadges();
   renderMascots();
+  applyBgImage();
   renderNav();
   renderHome();
   if ('serviceWorker' in navigator) {
