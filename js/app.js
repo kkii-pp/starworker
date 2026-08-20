@@ -129,6 +129,7 @@ function starSvg(opts) {
 }
 
 const MOD_META = {
+  home:     { c1: '#f59e0b', c2: '#fcd34d', emoji: '🏠', name: '个人首页' },
   fortune:  { c1: '#8b5cf6', c2: '#c084fc', emoji: '🔮', name: '每日运势' },
   todo:     { c1: '#3b82f6', c2: '#60a5fa', emoji: '📝', name: '每日待办' },
   fitness:  { c1: '#22c55e', c2: '#86efac', emoji: '💪', name: '运动饮食' },
@@ -159,6 +160,7 @@ function applyStarImage() {
   if (sub) {
     sub.textContent = '布灵布灵';
   }
+  if ($('#nav')) renderNav();
 }
 
 /* ---------- 语音 ---------- */
@@ -242,8 +244,9 @@ function playAudioFile(urls, fallback, btn, rate) {
 }
 
 /* ---------- 导航 ---------- */
-let currentMod = 'todo';
+let currentMod = 'home';
 const NAV_ITEMS = [
+  ['home', '个人首页', '🏠'],
   ['fortune', '每日运势', '🔮'],
   ['todo', '每日待办', '✅'],
   ['fitness', '运动饮食', '💪'],
@@ -260,11 +263,21 @@ function renderNav() {
   const nav = $('#nav');
   if (!nav) return;
   const icons = navIcons();
+  const avatarImg = getStore('wb.starImage', null);
   nav.innerHTML = NAV_ITEMS.map(([mod, name, def]) => {
     const c = icons[mod] || {};
-    const icon = c.img
-      ? `<span class="nav-ico"><img src="${c.img}" alt=""></span>`
-      : `<span class="nav-ico">${c.emoji || def}</span>`;
+    let icon;
+    if (c.img) {
+      icon = `<span class="nav-ico"><img src="${c.img}" alt=""></span>`;
+    } else if (c.emoji) {
+      icon = `<span class="nav-ico">${c.emoji}</span>`;
+    } else if (mod === 'home') {
+      icon = avatarImg
+        ? `<span class="nav-ico"><img class="nav-avatar" src="${avatarImg}" alt=""></span>`
+        : `<span class="nav-ico nav-avatar-svg">${starSvg({ c1: '#ffd75e', c2: '#ffe9a8', emoji: '🧳' })}</span>`;
+    } else {
+      icon = `<span class="nav-ico">${def}</span>`;
+    }
     return `<button class="nav-item ${currentMod === mod ? 'active' : ''}" data-mod="${mod}">${icon}<span>${name}</span></button>`;
   }).join('');
   $$('.nav-item').forEach(b => b.onclick = () => showModule(b.dataset.mod));
@@ -275,8 +288,62 @@ function showModule(mod) {
   $('#mod-' + mod).classList.add('active');
   $$('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.mod === mod));
   window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (mod === 'home') renderHome();
   if (mod === 'media') { renderMedia(); checkDuePlans(); }
   if (mod === 'ledger') renderLedger();
+}
+
+/* ---------- 个人首页 ---------- */
+const HOME_CARDS = [
+  ['early', '🌅', '早起', '7:00 前起床'],
+  ['water', '💧', '饮水', '喝够 2000ml'],
+  ['exercise', '🏃', '运动', '运动 20 分钟'],
+  ['read', '📖', '阅读', '阅读 20 分钟']
+];
+function renderHome() {
+  const box = $('#body-home');
+  if (!box) return;
+  const now = new Date();
+  const h = now.getHours();
+  const greet = h < 5 ? '夜深了' : h < 9 ? '早上好' : h < 12 ? '上午好' : h < 14 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+  const wk = ['日', '一', '二', '三', '四', '五', '六'][now.getDay()];
+  const p = getProfile();
+  const name = (p && p.name) || '布灵布灵';
+  const st = getStore('wb.checkin.' + todayStr(), { early: false, water: false, exercise: false, read: false });
+  box.innerHTML = `
+    <div class="home-top">
+      <div class="home-greet">${greet}，${esc(name)} ✨</div>
+      <div class="home-time" id="homeClock">${pad(now.getHours())}:${pad(now.getMinutes())}</div>
+      <div class="home-date" id="homeDate">${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${wk}</div>
+    </div>
+    <h3 class="home-h3">每日打卡</h3>
+    <div class="home-grid">
+      ${HOME_CARDS.map(([key, icon, cn, hint]) => `
+        <button class="checkin-card ${st[key] ? 'done' : ''}" data-key="${key}">
+          <span class="ci">${icon}</span>
+          <span class="cn">${cn}</span>
+          <span class="ch">${hint}</span>
+          ${st[key] ? '<span class="tick">✓</span>' : ''}
+        </button>`).join('')}
+    </div>`;
+  $$('[data-key]', box).forEach(b => b.onclick = () => {
+    const s = getStore('wb.checkin.' + todayStr(), { early: false, water: false, exercise: false, read: false });
+    s[b.dataset.key] = !s[b.dataset.key];
+    setStore('wb.checkin.' + todayStr(), s);
+    renderHome();
+    if (Object.values(s).every(Boolean)) confetti();
+  });
+}
+function tickHomeClock() {
+  const el = $('#homeClock');
+  if (!el) return;
+  const n = new Date();
+  el.textContent = pad(n.getHours()) + ':' + pad(n.getMinutes());
+  const d = $('#homeDate');
+  if (d) {
+    const wk = ['日', '一', '二', '三', '四', '五', '六'][n.getDay()];
+    d.textContent = `${n.getFullYear()}年${n.getMonth() + 1}月${n.getDate()}日 周${wk}`;
+  }
 }
 
 /* ---------- 资料 ---------- */
@@ -1868,6 +1935,7 @@ function init() {
   setDateBadges();
   renderMascots();
   renderNav();
+  renderHome();
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => { /* 本地 http 环境忽略 */ });
   }
@@ -1900,6 +1968,7 @@ function init() {
   renderLedger();
   renderSettings();
   checkDuePlans();
+  setInterval(tickHomeClock, 1000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
