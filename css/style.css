@@ -326,6 +326,23 @@ body.custom-bg .bg-sky .plane-path{opacity:0}
 .filter-tabs .pill{cursor:pointer;transition:all .15s}
 .filter-tabs .pill.active{background:var(--brand);border-color:var(--brand);color:#fff}
 
+/* 日程表（月历） */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-wd{text-align:center;font-size:11px;color:var(--ink2);font-weight:700;padding:2px 0}
+.cal-cell{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:44px;border-radius:10px;background:#fff;border:1px solid var(--line);
+  font-size:13px;transition:all .15s;padding:2px;
+}
+.cal-cell:active{transform:scale(.96)}
+.cal-cell .cd{font-weight:600;line-height:1}
+.cal-cell.today{border-color:var(--brand);background:#f3f0ff;font-weight:800}
+.cal-cell.sel{background:var(--brand);color:#fff;border-color:var(--brand)}
+.cal-cell .dots{position:absolute;bottom:3px;font-size:7px;color:var(--brand);letter-spacing:1px;max-width:92%;overflow:hidden;white-space:nowrap;line-height:1}
+.cal-cell.sel .dots{color:#fff}
+.cal-cell .dots i{font-style:normal;font-size:8px}
+.cal-cell.empty{background:transparent;border:none;pointer-events:none}
+
 /* ============ 运动饮食 ============ */
 .water-ctrl{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .meal-card{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff;margin-bottom:8px}
@@ -525,6 +542,9 @@ table.fin tr:last-child td{border-bottom:none}
   .ex-row .name{font-size:13px}
   .lib-card .lt{font-size:13px}
   .ledger-row{font-size:12.5px}
+  .cal-grid{gap:3px}
+  .cal-cell{min-height:38px;font-size:12px;border-radius:8px}
+  .cal-wd{font-size:10px}
   .pack-title{font-size:15px}
   .game-box .gs{font-size:12.5px}
   .btn-sm{padding:4px 8px;font-size:11.5px}
