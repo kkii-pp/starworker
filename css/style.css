@@ -52,6 +52,11 @@ img{max-width:100%}
   width:58vw;height:58vw;right:-18vw;bottom:6vh;
   background:radial-gradient(circle,rgba(156,214,255,.5),rgba(156,214,255,0) 70%);
 }
+body.custom-bg .bg-sky{background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#f6f1e7}
+body.custom-bg .bg-sky .sun,
+body.custom-bg .bg-sky .cloud,
+body.custom-bg .bg-sky .mountains,
+body.custom-bg .bg-sky .plane-path{opacity:0}
 .sun{
   position:absolute;top:4vh;right:6vw;width:130px;height:130px;border-radius:50%;
   background:radial-gradient(circle at 38% 34%,rgba(255,238,190,.95),rgba(255,207,125,.55) 58%,transparent 72%);
@@ -172,7 +177,7 @@ img{max-width:100%}
 /* ============ 个人首页 ============ */
 .home-top{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:33vh;padding:12px 2px 6px;text-align:center;
+  min-height:22vh;padding:12px 2px 6px;text-align:center;
 }
 .home-greet{
   font-family:"Yuanti SC","YouYuan","幼圆","PingFang SC","Microsoft YaHei",sans-serif;
@@ -190,7 +195,7 @@ img{max-width:100%}
 }
 .home-avatar-btn .ha img,.home-avatar-btn .ha svg{width:100%;height:100%;object-fit:contain}
 .home-avatar-btn small{font-size:10px;color:#b9b2a7;font-weight:600;letter-spacing:1px}
-.home-h3{font-size:16px;font-weight:800;margin:20px 0 10px}
+.home-h3{font-size:16px;font-weight:800;margin:14px 0 10px}
 .home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .home-tasks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .task-mini{
@@ -494,7 +499,7 @@ table.fin tr:last-child td{border-bottom:none}
   .grid2{grid-template-columns:1fr}
   .stat-cards{grid-template-columns:repeat(2,1fr)}
   .home-greet{font-size:15px}
-  .home-top{min-height:30vh}
+  .home-top{min-height:20vh}
   .home-time{font-size:40px}
   .home-date{font-size:12.5px}
   .home-avatar-btn{top:6px;right:6px}
