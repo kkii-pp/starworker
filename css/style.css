@@ -345,6 +345,8 @@ body.custom-bg .bg-sky .plane-path{opacity:0}
 .cal-cell .ev.more{color:var(--brand);font-weight:700}
 .cal-cell.sel .ev{color:rgba(255,255,255,.92)}
 .cal-cell.sel .ev.more{color:#fff}
+.cal-star{position:absolute;top:3px;right:5px;color:var(--gold);font-size:11px;line-height:1}
+.cal-cell.sel .cal-star{color:#fff}
 .cal-cell.empty{background:transparent;border:none;pointer-events:none}
 
 /* ============ 运动饮食 ============ */
