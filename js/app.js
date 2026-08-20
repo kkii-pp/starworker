@@ -1748,6 +1748,10 @@ let customIconTarget = null;
 function syncCfg() {
   return getStore('wb.sync', { owner: '', repo: 'starworker', token: '', pass: '', lastSync: '' });
 }
+function setSyncStatus(txt) {
+  const st = $('#syncStatus');
+  if (st) st.textContent = txt;
+}
 async function githubApi(method, path, body, token) {
   try {
     const r = await fetch('https://api.github.com' + path, {
@@ -1818,10 +1822,10 @@ async function syncUpload() {
     if (r.status === 200 || r.status === 201) {
       cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
       setStore('wb.sync', cfg);
-      const st = $('#syncStatus');
-      if (st) st.textContent = '✅ 已上传：' + cfg.lastSync;
+      setSyncStatus('✅ 已上传：' + cfg.lastSync);
       toast('已上传到云端 ☁️');
     } else {
+      setSyncStatus('❌ 上传失败：' + ((r.data && r.data.message) || r.status));
       toast('上传失败：' + ((r.data && r.data.message) || r.status));
     }
   };
@@ -1836,7 +1840,11 @@ async function syncDownload() {
   if (!cfg.owner || !cfg.repo || !cfg.token) { toast('请先填写 GitHub 用户名/仓库名/令牌'); return; }
   const path = 'sync/data.json';
   const g = await githubApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, null, cfg.token);
-  if (g.status !== 200 || !g.data || !g.data.content) { toast('云端还没有数据，或读取失败'); return; }
+  if (g.status !== 200 || !g.data || !g.data.content) {
+    setSyncStatus('❌ 读取云端失败：' + ((g.data && g.data.message) || g.status));
+    toast('云端还没有数据，或读取失败');
+    return;
+  }
   const text = decodeURIComponent(escape(atob(g.data.content)));
   try {
     const payload = await syncDecrypt(text, cfg.pass);
@@ -1847,6 +1855,7 @@ async function syncDownload() {
     toast(`已下载 ${n} 条数据，正在刷新…`);
     setTimeout(() => location.reload(), 900);
   } catch (e) {
+    setSyncStatus('❌ 解密失败：密码不对或数据格式不符');
     toast('解密失败：密码不对或数据格式不符');
   }
 }
@@ -1907,14 +1916,24 @@ async function autoSyncPush() {
       branch: 'main'
     };
     if (g.status === 200 && g.data && g.data.sha) body.sha = g.data.sha;
-    const r = await githubApi('PUT', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, body, cfg.token);
+    let r = await githubApi('PUT', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, body, cfg.token);
+    if ((r.status === 409 || r.status === 422) && body.sha) {
+      const g2 = await githubApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, null, cfg.token);
+      if (g2.status === 200 && g2.data && g2.data.sha) {
+        body.sha = g2.data.sha;
+        r = await githubApi('PUT', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, body, cfg.token);
+      }
+    }
     if (r.status === 200 || r.status === 201) {
       cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
       setStore('wb.sync', cfg);
-      const st = $('#syncStatus');
-      if (st) st.textContent = '✅ 已自动同步：' + cfg.lastSync;
+      setSyncStatus('✅ 已自动同步：' + cfg.lastSync);
+    } else {
+      setSyncStatus('❌ 自动上传失败：' + ((r.data && r.data.message) || r.status));
     }
-  } catch (e) { /* 自动同步失败静默，下次改动再试 */ }
+  } catch (e) {
+    setSyncStatus('❌ 自动上传失败：网络异常');
+  }
   syncBusy = false;
 }
 async function autoSyncPull() {
@@ -1934,6 +1953,7 @@ async function autoSyncPull() {
       location.reload();
     }
   } catch (e) {
+    setSyncStatus('❌ 云端数据拉取失败：请检查令牌或加密密码设置');
     toast('云端数据拉取失败：请检查令牌或加密密码设置');
   }
   syncBusy = false;
@@ -2125,10 +2145,11 @@ function renderSettings() {
     <div class="card">
       <h3>☁️ 云同步 <span class="sub">免费：GitHub 仓库里一份加密 JSON · 网页可查看 · 随时可迁移</span></h3>
       <div class="todo-add">
-        <input class="input" id="syncOwner" placeholder="GitHub 用户名" value="${esc(syncCfg().owner)}" style="max-width:130px">
+        <input class="input" id="syncOwner" placeholder="GitHub 用户名" value="${esc(syncCfg().owner || 'kkii-pp')}" style="max-width:130px">
         <input class="input" id="syncRepo" placeholder="仓库名" value="${esc(syncCfg().repo || 'starworker')}" style="max-width:120px">
         <input class="input" id="syncToken" type="password" placeholder="令牌（仅存本机）" value="${esc(syncCfg().token)}" style="flex:1;min-width:140px">
         <button class="btn btn-sm" id="syncSave">保存设置</button>
+        <button class="btn btn-sm" id="syncTest">测试连接</button>
       </div>
       <div class="todo-add" style="margin-top:8px">
         <input class="input" id="syncPass" type="password" placeholder="加密密码（建议设置）" value="${esc(syncCfg().pass)}" style="flex:1;min-width:160px">
@@ -2209,6 +2230,23 @@ function renderSettings() {
     c.pass = $('#syncPass').value;
     setStore('wb.sync', c);
     toast('同步设置已保存 ☁️');
+  };
+  $('#syncTest').onclick = async () => {
+    const c = syncCfg();
+    c.owner = $('#syncOwner').value.trim() || 'kkii-pp';
+    c.repo = $('#syncRepo').value.trim() || 'starworker';
+    c.token = $('#syncToken').value.trim();
+    c.pass = $('#syncPass').value;
+    setStore('wb.sync', c);
+    if (!c.token) { setSyncStatus('请先填写令牌再测试'); toast('请先填写令牌'); return; }
+    const r = await githubApi('GET', '/user', null, c.token);
+    if (r.status === 200 && r.data && r.data.login) {
+      setSyncStatus('✅ 连接成功：' + r.data.login + ' · 令牌有效');
+      toast('连接成功 ✅');
+    } else {
+      setSyncStatus('❌ 连接失败：' + ((r.data && r.data.message) || r.status));
+      toast('连接失败：' + ((r.data && r.data.message) || r.status));
+    }
   };
   $('#syncUp').onclick = syncUpload;
   $('#syncDown').onclick = syncDownload;
