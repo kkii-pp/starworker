@@ -612,10 +612,36 @@ let todoFilter = 'all';
 function getTodos() { return getStore('wb.todos', []); }
 function saveTodos(t) { setStore('wb.todos', t); renderTodo(); }
 
+/* ---------- 日程表（月历） ---------- */
+let schedY = null, schedM = null, schedSel = null;
+function schedMap() {
+  const m = getStore('wb.schedule', {});
+  return (m && typeof m === 'object' && !Array.isArray(m)) ? m : {};
+}
+function buildCalendar(y, m) {
+  const first = new Date(y, m, 1);
+  const startDow = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const today = todayStr();
+  let html = '';
+  for (let d = 0; d < startDow; d++) html += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = y + '-' + pad(m + 1) + '-' + pad(d);
+    const ev = schedMap()[ds] || [];
+    const cls = 'cal-cell' + (ds === today ? ' today' : '') + (ds === schedSel ? ' sel' : '');
+    html += `<button class="${cls}" data-day="${ds}">
+      <span class="cd">${d}</span>
+      ${ev.length ? `<span class="dots">${ev.slice(0, 4).map(() => '●').join('')}${ev.length > 4 ? '<i>+' + (ev.length - 4) + '</i>' : ''}</span>` : ''}
+    </button>`;
+  }
+  return html;
+}
+
 function renderTodo() {
   const box = $('#body-todo');
   const todos = getTodos();
   const today = todayStr();
+  if (schedY == null) { const n = new Date(); schedY = n.getFullYear(); schedM = n.getMonth(); schedSel = today; }
   const doneToday = todos.filter(t => t.date === today && t.done).length;
   const totalToday = todos.filter(t => t.date === today).length;
   const pct = totalToday ? Math.round(doneToday / totalToday * 100) : 0;
@@ -646,6 +672,37 @@ function renderTodo() {
   `).join('') || '<p class="muted" style="text-align:center;padding:20px 0">这里空空如也，添加一件小事开始吧 ✨</p>';
 
   box.innerHTML = `
+    <div class="card">
+      <div class="pack-head" style="margin-bottom:10px">
+        <h3>📅 日程表 <span class="sub">点击日期添加/查看当天事项</span></h3>
+        <div class="btn-row" style="align-items:center">
+          <button class="btn btn-sm" id="schedPrev">‹</button>
+          <b id="schedTitle" style="min-width:92px;text-align:center">${schedY}年${schedM + 1}月</b>
+          <button class="btn btn-sm" id="schedNext">›</button>
+          <button class="btn btn-sm btn-ghost" id="schedToday">今天</button>
+        </div>
+      </div>
+      <div class="cal-grid">
+        ${['一', '二', '三', '四', '五', '六', '日'].map(w => `<div class="cal-wd">${w}</div>`).join('')}
+        ${buildCalendar(schedY, schedM)}
+      </div>
+      <div style="margin-top:10px">
+        <div class="muted" style="font-weight:700;margin-bottom:6px">📌 ${esc(schedSel)} 的事项</div>
+        <div class="todo-add">
+          <input class="input" id="schedText" placeholder="添加事项，如：9:00 见客户">
+          <input class="input" type="time" id="schedTime" style="max-width:110px">
+          <button class="btn btn-primary" id="schedAdd">＋ 添加</button>
+        </div>
+        <div id="schedList">
+          ${(schedMap()[schedSel] || []).slice().sort((a, b) => (a.time || '').localeCompare(b.time || '')).map(e => `
+            <div class="ex-row">
+              ${e.time ? `<span class="tag blue">${esc(e.time)}</span>` : '<span class="tag gray">全天</span>'}
+              <div class="name" style="flex:1">${esc(e.text)}</div>
+              <button class="todo-del" data-sdel="${e.id}">🗑</button>
+            </div>`).join('') || '<p class="muted" style="text-align:center;padding:8px 0">这一天还没有日程</p>'}
+        </div>
+      </div>
+    </div>
     <div class="card">
       <div class="ring-wrap">
         <div class="ring" style="--p:${pct}"><b>${pct}%</b><small>今日进度</small></div>
@@ -698,6 +755,29 @@ function renderTodo() {
   });
   const cb = $('#clearDoneBtn');
   if (cb) cb.onclick = () => saveTodos(getTodos().filter(t => !t.done));
+  $('#schedPrev').onclick = () => { schedM--; if (schedM < 0) { schedM = 11; schedY--; } renderTodo(); };
+  $('#schedNext').onclick = () => { schedM++; if (schedM > 11) { schedM = 0; schedY++; } renderTodo(); };
+  $('#schedToday').onclick = () => { const n = new Date(); schedY = n.getFullYear(); schedM = n.getMonth(); schedSel = todayStr(); renderTodo(); };
+  $$('.cal-cell[data-day]').forEach(c => c.onclick = () => { schedSel = c.dataset.day; renderTodo(); });
+  $('#schedAdd').onclick = () => {
+    const text = $('#schedText').value.trim();
+    if (!text) { toast('先写点事项内容'); return; }
+    const m = schedMap();
+    if (!Array.isArray(m[schedSel])) m[schedSel] = [];
+    m[schedSel].push({ id: uid(), text, time: $('#schedTime').value });
+    setStore('wb.schedule', m);
+    renderTodo();
+    toast('已添加日程 📅');
+  };
+  const schedTextInput = $('#schedText');
+  if (schedTextInput) schedTextInput.addEventListener('keydown', e => { if (e.key === 'Enter') $('#schedAdd').click(); });
+  $$('[data-sdel]').forEach(b => b.onclick = () => {
+    const m = schedMap();
+    m[schedSel] = (m[schedSel] || []).filter(x => String(x.id) !== b.dataset.sdel);
+    setStore('wb.schedule', m);
+    renderTodo();
+    toast('已删除');
+  });
 }
 
 /* =========================================================
