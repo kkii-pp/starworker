@@ -1830,6 +1830,36 @@ function uploadBgImage(e) {
   reader.readAsDataURL(file);
 }
 
+/* ---------- 自定义每日成就（金币） ---------- */
+let achieveDate = todayStr();
+function coinTotal() { return Number(getStore('wb.coin', 0)) || 0; }
+function achieveMap() {
+  const m = getStore('wb.customDailyAchieve', {});
+  return (m && typeof m === 'object' && !Array.isArray(m)) ? m : {};
+}
+function achieveOf(date) {
+  const m = achieveMap();
+  if (!Array.isArray(m[date])) m[date] = [];
+  return m[date];
+}
+function achieveListHtml() {
+  const list = achieveOf(achieveDate);
+  if (!list.length) return '<p class="muted" style="text-align:center;padding:10px 0">这一天还没有成就，添加一条开始攒金币吧 ✨</p>';
+  return list.map(a => {
+    const stTxt = a.claimed ? '已领取' : a.finished ? '可领取' : '待完成';
+    return `<div class="ach-row ${a.finished ? 'fin' : ''} ${a.claimed ? 'done' : ''}">
+      <div class="mid">
+        <div class="t">${a.claimed ? '✅' : a.finished ? '⭐' : '○'} ${esc(a.title)}</div>
+        <div class="s">+${Number(a.rewardCoin) || 0} 金币 · ${stTxt}</div>
+      </div>
+      ${!a.finished ? `<button class="btn btn-sm" data-afin="${a.id}">标记完成</button>` : ''}
+      ${a.finished && !a.claimed ? `<button class="btn btn-sm btn-primary" data-aclaim="${a.id}">领取金币</button>` : ''}
+      ${a.claimed ? '<span class="tag green">已领取</span>' : ''}
+      <button class="todo-del" data-adel="${a.id}">🗑</button>
+    </div>`;
+  }).join('');
+}
+
 function renderSettings() {
   const box = $('#body-settings');
   const p = getProfile();
@@ -1895,6 +1925,20 @@ function renderSettings() {
         <input type="file" id="navIconFile" accept="image/*" hidden>` : ''}
     </div>
     <div class="card">
+      <div class="pack-head" style="margin-bottom:8px">
+        <h3>📋 自定义每日成就 <span class="sub">当前总金币：<b style="color:var(--gold)">${coinTotal()}</b> 🪙</span></h3>
+        <input class="input" type="date" id="achDate" value="${esc(achieveDate)}" style="max-width:150px">
+      </div>
+      <div class="todo-add">
+        <input class="input" id="achTitle" placeholder="成就名称，如：背 30 个单词" style="flex:2;min-width:150px">
+        <input class="input" type="number" id="achCoinInput" placeholder="金币（>0）" min="1" step="1" style="max-width:110px">
+        <button class="btn btn-primary" id="achAdd">＋ 添加</button>
+      </div>
+      <div id="achList" style="margin-top:10px">
+        ${achieveListHtml()}
+      </div>
+    </div>
+    <div class="card">
       <h3>🛍️ 心仪好物 <span class="sub">粘贴 抖音/小红书/拼多多/淘宝 链接，自动识别类别与金额</span></h3>
       <div class="todo-add">
         <input class="input" id="wlUrl" placeholder="粘贴好物链接" style="flex:2;min-width:180px">
@@ -1949,6 +1993,43 @@ function renderSettings() {
       <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 手机访问：和电脑连同一 Wi-Fi，启动 start.bat 后用手机浏览器打开显示的网址（或扫 outputs 里的二维码）。</p>
     </div>`;
   $('#setProfile').onclick = openProfileModal;
+  const achDateInput = $('#achDate');
+  if (achDateInput) achDateInput.onchange = () => { achieveDate = achDateInput.value || todayStr(); renderSettings(); };
+  $('#achAdd').onclick = () => {
+    const title = $('#achTitle').value.trim();
+    const coin = Number($('#achCoinInput').value);
+    if (!title) { toast('请输入成就名称'); return; }
+    if (!coin || coin <= 0 || !Number.isInteger(coin)) { toast('金币必须是大于 0 的整数'); return; }
+    const m = achieveMap();
+    if (!Array.isArray(m[achieveDate])) m[achieveDate] = [];
+    m[achieveDate].push({ id: Date.now(), title, rewardCoin: coin, finished: false, claimed: false });
+    setStore('wb.customDailyAchieve', m);
+    renderSettings();
+    toast('成就已添加 ✅');
+  };
+  $$('[data-afin]').forEach(b => b.onclick = () => {
+    const m = achieveMap();
+    const it = (m[achieveDate] || []).find(x => String(x.id) === b.dataset.afin);
+    if (it) { it.finished = true; setStore('wb.customDailyAchieve', m); renderSettings(); toast('已标记完成 ⭐'); }
+  });
+  $$('[data-aclaim]').forEach(b => b.onclick = () => {
+    const m = achieveMap();
+    const it = (m[achieveDate] || []).find(x => String(x.id) === b.dataset.aclaim);
+    if (it && it.finished && !it.claimed) {
+      it.claimed = true;
+      setStore('wb.customDailyAchieve', m);
+      setStore('wb.coin', coinTotal() + (Number(it.rewardCoin) || 0));
+      renderSettings();
+      toast('+ ' + it.rewardCoin + ' 金币 🪙');
+    }
+  });
+  $$('[data-adel]').forEach(b => b.onclick = () => {
+    const m = achieveMap();
+    m[achieveDate] = (m[achieveDate] || []).filter(x => String(x.id) !== b.dataset.adel);
+    setStore('wb.customDailyAchieve', m);
+    renderSettings();
+    toast('已删除');
+  });
   $('#bgApplyUrl').onclick = () => {
     const url = $('#bgUrl').value.trim();
     if (!url) { toast('请输入图片链接'); return; }
