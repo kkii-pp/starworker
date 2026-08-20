@@ -632,10 +632,31 @@ function buildCalendar(y, m) {
     html += `<button class="${cls}" data-day="${ds}">
       <span class="cd">${d}</span>
       ${ev.slice(0, 3).map(e => `<span class="ev">${esc((e.time ? e.time + ' ' : '') + e.text)}</span>`).join('')}
-      ${ev.length > 3 ? `<span class="ev more">+${ev.length - 3}</span>` : ''}
+      ${ev.length > 3 ? '<span class="cal-star">★</span>' : ''}
     </button>`;
   }
   return html;
+}
+function openSchedModal(date) {
+  const list = (schedMap()[date] || []).slice().sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const n = new Date(date + 'T00:00:00');
+  const wk = ['日', '一', '二', '三', '四', '五', '六'][n.getDay()];
+  $('#schedModalTitle').textContent = '📅 ' + date + ' 周' + wk;
+  $('#schedModalBody').innerHTML = list.length ? list.map(e => `
+    <div class="ex-row">
+      ${e.time ? `<span class="tag blue">${esc(e.time)}</span>` : '<span class="tag gray">全天</span>'}
+      <div class="name" style="flex:1">${esc(e.text)}</div>
+      <button class="todo-del" data-sdel="${e.id}">🗑</button>
+    </div>`).join('') : '<p class="muted" style="text-align:center;padding:16px 0">这一天还没有日程<br>回到待办页下方添加 ✨</p>';
+  $('#schedModal').hidden = false;
+  $$('[data-sdel]', $('#schedModalBody')).forEach(b => b.onclick = () => {
+    const m = schedMap();
+    m[date] = (m[date] || []).filter(x => String(x.id) !== b.dataset.sdel);
+    setStore('wb.schedule', m);
+    openSchedModal(date);
+    renderTodo();
+    toast('已删除');
+  });
 }
 
 function renderTodo() {
@@ -688,20 +709,13 @@ function renderTodo() {
         ${buildCalendar(schedY, schedM)}
       </div>
       <div style="margin-top:10px">
-        <div class="muted" style="font-weight:700;margin-bottom:6px">📌 ${esc(schedSel)} 的事项</div>
+        <div class="muted" style="font-weight:700;margin-bottom:6px">📌 为 ${esc(schedSel)} 添加事项</div>
         <div class="todo-add">
           <input class="input" id="schedText" placeholder="添加事项，如：9:00 见客户">
           <input class="input" type="time" id="schedTime" style="max-width:110px">
           <button class="btn btn-primary" id="schedAdd">＋ 添加</button>
         </div>
-        <div id="schedList">
-          ${(schedMap()[schedSel] || []).slice().sort((a, b) => (a.time || '').localeCompare(b.time || '')).map(e => `
-            <div class="ex-row">
-              ${e.time ? `<span class="tag blue">${esc(e.time)}</span>` : '<span class="tag gray">全天</span>'}
-              <div class="name" style="flex:1">${esc(e.text)}</div>
-              <button class="todo-del" data-sdel="${e.id}">🗑</button>
-            </div>`).join('') || '<p class="muted" style="text-align:center;padding:8px 0">这一天还没有日程</p>'}
-        </div>
+        <p class="rss-note" style="margin-top:6px">添加后直接显示在对应日期的格子里；点日期格子可放大查看当天事项。</p>
       </div>
     </div>
     <div class="card">
@@ -759,7 +773,11 @@ function renderTodo() {
   $('#schedPrev').onclick = () => { schedM--; if (schedM < 0) { schedM = 11; schedY--; } renderTodo(); };
   $('#schedNext').onclick = () => { schedM++; if (schedM > 11) { schedM = 0; schedY++; } renderTodo(); };
   $('#schedToday').onclick = () => { const n = new Date(); schedY = n.getFullYear(); schedM = n.getMonth(); schedSel = todayStr(); renderTodo(); };
-  $$('.cal-cell[data-day]').forEach(c => c.onclick = () => { schedSel = c.dataset.day; renderTodo(); });
+  $$('.cal-cell[data-day]').forEach(c => c.onclick = () => {
+    schedSel = c.dataset.day;
+    renderTodo();
+    openSchedModal(schedSel);
+  });
   $('#schedAdd').onclick = () => {
     const text = $('#schedText').value.trim();
     if (!text) { toast('先写点事项内容'); return; }
@@ -772,13 +790,6 @@ function renderTodo() {
   };
   const schedTextInput = $('#schedText');
   if (schedTextInput) schedTextInput.addEventListener('keydown', e => { if (e.key === 'Enter') $('#schedAdd').click(); });
-  $$('[data-sdel]').forEach(b => b.onclick = () => {
-    const m = schedMap();
-    m[schedSel] = (m[schedSel] || []).filter(x => String(x.id) !== b.dataset.sdel);
-    setStore('wb.schedule', m);
-    renderTodo();
-    toast('已删除');
-  });
 }
 
 /* =========================================================
@@ -1872,6 +1883,69 @@ async function loadGoodsInfo(url) {
   }
 }
 
+/* ---------- 自动同步 ---------- */
+let syncBusy = false;
+let syncTimer = null;
+function scheduleAutoSync() {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => autoSyncPush(), 3000);
+}
+async function autoSyncPush() {
+  const cfg = syncCfg();
+  if (!cfg.owner || !cfg.repo || !cfg.token || syncBusy) return;
+  syncBusy = true;
+  try {
+    const data = {};
+    Object.keys(localStorage).filter(k => k.startsWith('wb.')).forEach(k => { data[k] = localStorage.getItem(k); });
+    const payload = { app: 'travel-star-workbench', version: APP_VERSION, time: new Date().toISOString(), data };
+    const content = await syncEncrypt(payload, cfg.pass);
+    const path = 'sync/data.json';
+    const g = await githubApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, null, cfg.token);
+    const body = {
+      message: 'sync ' + new Date().toISOString(),
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: 'main'
+    };
+    if (g.status === 200 && g.data && g.data.sha) body.sha = g.data.sha;
+    const r = await githubApi('PUT', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, body, cfg.token);
+    if (r.status === 200 || r.status === 201) {
+      cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
+      setStore('wb.sync', cfg);
+      const st = $('#syncStatus');
+      if (st) st.textContent = '✅ 已自动同步：' + cfg.lastSync;
+    }
+  } catch (e) { /* 自动同步失败静默，下次改动再试 */ }
+  syncBusy = false;
+}
+async function autoSyncPull() {
+  const cfg = syncCfg();
+  if (!cfg.owner || !cfg.repo || !cfg.token || syncBusy) return;
+  syncBusy = true;
+  try {
+    const path = 'sync/data.json';
+    const g = await githubApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, null, cfg.token);
+    if (g.status === 200 && g.data && g.data.content) {
+      const text = decodeURIComponent(escape(atob(g.data.content)));
+      const payload = await syncDecrypt(text, cfg.pass);
+      Object.entries(payload.data || {}).forEach(([k, v]) => { localStorage.setItem(k, v); });
+      cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
+      setStore('wb.sync', cfg);
+      sessionStorage.setItem('wb_sync_pulled', '1');
+      location.reload();
+    }
+  } catch (e) {
+    toast('云端数据拉取失败：请检查令牌或加密密码设置');
+  }
+  syncBusy = false;
+}
+{
+  const baseSetStore = setStore;
+  setStore = function (key, val) {
+    baseSetStore(key, val);
+    if (key !== 'wb.sync' && !syncBusy && window.syncReady) scheduleAutoSync();
+  };
+}
+
 /* ---------- 内容背景自定义 ---------- */
 function bgImage() { return getStore('wb.bgImage', null); }
 function applyBgImage() {
@@ -2061,7 +2135,7 @@ function renderSettings() {
         <button class="btn btn-sm btn-primary" id="syncUp">⬆ 上传到云端</button>
         <button class="btn btn-sm" id="syncDown">⬇ 从云端下载</button>
       </div>
-      <p class="rss-note" id="syncStatus" style="margin-top:8px">${syncCfg().lastSync ? '上次同步：' + esc(syncCfg().lastSync) : '说明：用你的 GitHub 账号 + 一个令牌（网页上创建，不用装软件）。数据会（可选加密）存到仓库 sync/data.json，在 github.com 网页上就能查看，以后可以随时迁移到任何云端。'}</p>
+      <p class="rss-note" id="syncStatus" style="margin-top:8px">${syncCfg().lastSync ? '上次同步：' + esc(syncCfg().lastSync) : '已开启自动同步：打开页面自动拉取云端数据，改动后约 3 秒自动上传。电脑和手机都需要各填一次相同的用户名/仓库/令牌/加密密码（令牌在网页上创建，不用装软件）。'}</p>
     </div>
     <div class="card">
       <h3>🗄️ 数据管理 <span class="sub">待办、喝水、学习记录等保存在浏览器本地</span></h3>
@@ -2375,6 +2449,12 @@ function init() {
   renderSettings();
   checkDuePlans();
   setInterval(tickHomeClock, 1000);
+  window.syncReady = true;
+  if (sessionStorage.getItem('wb_sync_pulled')) {
+    sessionStorage.removeItem('wb_sync_pulled');
+  } else {
+    autoSyncPull();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
