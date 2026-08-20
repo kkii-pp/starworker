@@ -295,7 +295,7 @@ function showModule(mod) {
 
 /* ---------- 个人首页 ---------- */
 const HOME_CARDS = [
-  ['early', '🌅', '早起', '7:00 前起床'],
+  ['early', '🌅', '早起', '7:30 前起床'],
   ['water', '💧', '饮水', '喝够 2000ml'],
   ['exercise', '🏃', '运动', '运动 20 分钟'],
   ['read', '📖', '阅读', '阅读 20 分钟']
@@ -310,8 +310,15 @@ function renderHome() {
   const p = getProfile();
   const name = (p && p.name) || '布灵布灵';
   const st = getStore('wb.checkin.' + todayStr(), { early: false, water: false, exercise: false, read: false });
+  const avatarImg = getStore('wb.starImage', null);
+  const cats = { 工作: '#3b82f6', 学习: '#8b5cf6', 生活: '#22c55e', 运动: '#f59e0b', 其他: '#64748b' };
+  const todayTodos = getTodos().filter(t => t.date === todayStr() && !t.done);
   box.innerHTML = `
     <div class="home-top">
+      <button class="home-avatar-btn" id="homeAvatarBtn" title="更换头像">
+        <span class="ha">${avatarImg ? `<img src="${avatarImg}" alt="">` : starSvg({ c1: '#ffd75e', c2: '#ffe9a8', emoji: '🧳' })}</span>
+        <small>换头像</small>
+      </button>
       <div class="home-greet">${greet}，${esc(name)} ✨</div>
       <div class="home-time" id="homeClock">${pad(now.getHours())}:${pad(now.getMinutes())}</div>
       <div class="home-date" id="homeDate">${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 周${wk}</div>
@@ -325,7 +332,16 @@ function renderHome() {
           <span class="ch">${hint}</span>
           ${st[key] ? '<span class="tick">✓</span>' : ''}
         </button>`).join('')}
-    </div>`;
+    </div>
+    <h3 class="home-h3">每日任务概览</h3>
+    <div class="home-tasks">
+      ${todayTodos.length ? todayTodos.map(t => `
+        <div class="task-mini">
+          <span class="tag" style="background:${cats[t.cat] || cats.其他}1a;color:${cats[t.cat] || cats.其他}">${esc(t.cat || '其他')}</span>
+          <span class="tt">${esc(t.text)}</span>
+        </div>`).join('') : '<p class="muted" style="text-align:center;padding:12px 0">今天还没有待办，去「每日待办」添加一件吧 ✨</p>'}
+    </div>
+    <input type="file" id="homeAvatarFile" accept="image/*" hidden>`;
   $$('[data-key]', box).forEach(b => b.onclick = () => {
     const s = getStore('wb.checkin.' + todayStr(), { early: false, water: false, exercise: false, read: false });
     s[b.dataset.key] = !s[b.dataset.key];
@@ -333,6 +349,34 @@ function renderHome() {
     renderHome();
     if (Object.values(s).every(Boolean)) confetti();
   });
+  const homeAvatarBtn = $('#homeAvatarBtn');
+  if (homeAvatarBtn) homeAvatarBtn.onclick = () => $('#homeAvatarFile').click();
+  const homeAvatarFile = $('#homeAvatarFile');
+  if (homeAvatarFile) homeAvatarFile.onchange = uploadHomeAvatar;
+}
+function uploadHomeAvatar(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { toast('请选择图片文件'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const max = 320;
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      setStore('wb.starImage', canvas.toDataURL('image/png'));
+      applyStarImage();
+      renderHome();
+      toast('头像已更新 ⭐');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 function tickHomeClock() {
   const el = $('#homeClock');
@@ -1608,6 +1652,113 @@ function saveWishlist(l) { setStore('wb.wishlist', l); renderSettings(); }
 let wlFilter = '全部';
 let customIconTarget = null;
 
+/* ---------- 云同步（GitHub 仓库里的加密 JSON，网页可查看、可迁移） ---------- */
+function syncCfg() {
+  return getStore('wb.sync', { owner: '', repo: 'starworker', token: '', pass: '', lastSync: '' });
+}
+async function githubApi(method, path, body, token) {
+  try {
+    const r = await fetch('https://api.github.com' + path, {
+      method,
+      headers: {
+        'Authorization': 'token ' + token,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return { status: r.status, data: await r.json().catch(() => null) };
+  } catch (e) {
+    return { status: 0, data: { message: String(e).slice(0, 80) } };
+  }
+}
+async function syncEncrypt(obj, pass) {
+  const plain = JSON.stringify(obj);
+  if (!pass || !(window.crypto && crypto.subtle)) {
+    return 'RAW1:' + btoa(unescape(encodeURIComponent(plain)));
+  }
+  const enc = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    baseKey, { name: 'AES-GCM', length: 256 }, false, ['encrypt']
+  );
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(plain));
+  const raw = new Uint8Array(16 + 12 + ct.byteLength);
+  raw.set(salt, 0); raw.set(iv, 16); raw.set(new Uint8Array(ct), 28);
+  return 'ENC1:' + btoa(String.fromCharCode(...raw));
+}
+async function syncDecrypt(text, pass) {
+  if (text.startsWith('RAW1:')) {
+    return JSON.parse(decodeURIComponent(escape(atob(text.slice(5)))));
+  }
+  if (!pass || !(window.crypto && crypto.subtle)) throw new Error('需要加密密码');
+  const raw = Uint8Array.from(atob(text.slice(5)), c => c.charCodeAt(0));
+  const salt = raw.slice(0, 16), iv = raw.slice(16, 28), ct = raw.slice(28);
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    baseKey, { name: 'AES-GCM', length: 256 }, false, ['decrypt']
+  );
+  const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function syncUpload() {
+  const cfg = syncCfg();
+  if (!cfg.owner || !cfg.repo || !cfg.token) { toast('请先填写 GitHub 用户名/仓库名/令牌'); return; }
+  const doUpload = async () => {
+    const data = {};
+    Object.keys(localStorage).filter(k => k.startsWith('wb.')).forEach(k => { data[k] = localStorage.getItem(k); });
+    const payload = { app: 'travel-star-workbench', version: APP_VERSION, time: new Date().toISOString(), data };
+    const content = await syncEncrypt(payload, cfg.pass);
+    const path = 'sync/data.json';
+    const g = await githubApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, null, cfg.token);
+    const body = {
+      message: 'sync ' + new Date().toISOString(),
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: 'main'
+    };
+    if (g.status === 200 && g.data && g.data.sha) body.sha = g.data.sha;
+    const r = await githubApi('PUT', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, body, cfg.token);
+    if (r.status === 200 || r.status === 201) {
+      cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
+      setStore('wb.sync', cfg);
+      const st = $('#syncStatus');
+      if (st) st.textContent = '✅ 已上传：' + cfg.lastSync;
+      toast('已上传到云端 ☁️');
+    } else {
+      toast('上传失败：' + ((r.data && r.data.message) || r.status));
+    }
+  };
+  if (!cfg.pass) {
+    confirmDlg('未设置加密密码', '你的数据会以明文存在公开仓库的 sync/data.json（GitHub 网页可见）。建议在“加密密码”里设置一个密码再上传。仍要明文上传吗？', doUpload);
+  } else {
+    doUpload();
+  }
+}
+async function syncDownload() {
+  const cfg = syncCfg();
+  if (!cfg.owner || !cfg.repo || !cfg.token) { toast('请先填写 GitHub 用户名/仓库名/令牌'); return; }
+  const path = 'sync/data.json';
+  const g = await githubApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path, null, cfg.token);
+  if (g.status !== 200 || !g.data || !g.data.content) { toast('云端还没有数据，或读取失败'); return; }
+  const text = decodeURIComponent(escape(atob(g.data.content)));
+  try {
+    const payload = await syncDecrypt(text, cfg.pass);
+    let n = 0;
+    Object.entries(payload.data || {}).forEach(([k, v]) => { localStorage.setItem(k, v); n++; });
+    cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
+    setStore('wb.sync', cfg);
+    toast(`已下载 ${n} 条数据，正在刷新…`);
+    setTimeout(() => location.reload(), 900);
+  } catch (e) {
+    toast('解密失败：密码不对或数据格式不符');
+  }
+}
+
 function goodsPlatform(u) {
   if (/douyin\.com|iesdouyin/i.test(u)) return '抖音';
   if (/xiaohongshu\.com|xhslink/i.test(u)) return '小红书';
@@ -1723,6 +1874,21 @@ function renderSettings() {
       </div>
     </div>
     <div class="card">
+      <h3>☁️ 云同步 <span class="sub">免费：GitHub 仓库里一份加密 JSON · 网页可查看 · 随时可迁移</span></h3>
+      <div class="todo-add">
+        <input class="input" id="syncOwner" placeholder="GitHub 用户名" value="${esc(syncCfg().owner)}" style="max-width:130px">
+        <input class="input" id="syncRepo" placeholder="仓库名" value="${esc(syncCfg().repo || 'starworker')}" style="max-width:120px">
+        <input class="input" id="syncToken" type="password" placeholder="令牌（仅存本机）" value="${esc(syncCfg().token)}" style="flex:1;min-width:140px">
+        <button class="btn btn-sm" id="syncSave">保存设置</button>
+      </div>
+      <div class="todo-add" style="margin-top:8px">
+        <input class="input" id="syncPass" type="password" placeholder="加密密码（建议设置）" value="${esc(syncCfg().pass)}" style="flex:1;min-width:160px">
+        <button class="btn btn-sm btn-primary" id="syncUp">⬆ 上传到云端</button>
+        <button class="btn btn-sm" id="syncDown">⬇ 从云端下载</button>
+      </div>
+      <p class="rss-note" id="syncStatus" style="margin-top:8px">${syncCfg().lastSync ? '上次同步：' + esc(syncCfg().lastSync) : '说明：用你的 GitHub 账号 + 一个令牌（网页上创建，不用装软件）。数据会（可选加密）存到仓库 sync/data.json，在 github.com 网页上就能查看，以后可以随时迁移到任何云端。'}</p>
+    </div>
+    <div class="card">
       <h3>🗄️ 数据管理 <span class="sub">待办、喝水、学习记录等保存在浏览器本地</span></h3>
       <div class="btn-row">
         <button class="btn btn-sm" id="setExport">📤 导出数据</button>
@@ -1733,6 +1899,17 @@ function renderSettings() {
       <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 手机访问：和电脑连同一 Wi-Fi，启动 start.bat 后用手机浏览器打开显示的网址（或扫 outputs 里的二维码）。</p>
     </div>`;
   $('#setProfile').onclick = openProfileModal;
+  $('#syncSave').onclick = () => {
+    const c = syncCfg();
+    c.owner = $('#syncOwner').value.trim();
+    c.repo = $('#syncRepo').value.trim() || 'starworker';
+    c.token = $('#syncToken').value.trim();
+    c.pass = $('#syncPass').value;
+    setStore('wb.sync', c);
+    toast('同步设置已保存 ☁️');
+  };
+  $('#syncUp').onclick = syncUpload;
+  $('#syncDown').onclick = syncDownload;
   $$('[data-wltag]').forEach(t => t.onclick = () => { wlFilter = t.dataset.wltag; renderSettings(); });
   $$('[data-wldel]').forEach(b => b.onclick = () => saveWishlist(wishlist().filter(x => x.id !== b.dataset.wldel)));
   $('#wlDetect').onclick = async () => {
