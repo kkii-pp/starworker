@@ -627,11 +627,12 @@ function buildCalendar(y, m) {
   for (let d = 0; d < startDow; d++) html += '<div class="cal-cell empty"></div>';
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = y + '-' + pad(m + 1) + '-' + pad(d);
-    const ev = schedMap()[ds] || [];
+    const ev = (schedMap()[ds] || []).slice().sort((a, b) => (a.time || '').localeCompare(b.time || ''));
     const cls = 'cal-cell' + (ds === today ? ' today' : '') + (ds === schedSel ? ' sel' : '');
     html += `<button class="${cls}" data-day="${ds}">
       <span class="cd">${d}</span>
-      ${ev.length ? `<span class="dots">${ev.slice(0, 4).map(() => '●').join('')}${ev.length > 4 ? '<i>+' + (ev.length - 4) + '</i>' : ''}</span>` : ''}
+      ${ev.slice(0, 3).map(e => `<span class="ev">${esc((e.time ? e.time + ' ' : '') + e.text)}</span>`).join('')}
+      ${ev.length > 3 ? `<span class="ev more">+${ev.length - 3}</span>` : ''}
     </button>`;
   }
   return html;
