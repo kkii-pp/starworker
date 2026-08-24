@@ -2183,7 +2183,7 @@ function renderSettings() {
         <button class="btn btn-sm btn-danger" id="setClear">🗑 清空全部数据</button>
       </div>
       <input type="file" id="importFile" accept="application/json" hidden>
-      <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 手机访问：和电脑连同一 Wi-Fi，启动 start.bat 后用手机浏览器打开显示的网址（或扫 outputs 里的二维码）。</p>
+      <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 永久网址：https://kkii-pp.github.io/starworker/（手机/电脑打开同一网址，数据在「☁️ 云同步」里互通）</p>
       <p class="rss-note" style="margin-top:6px">💾 自动保存已开启：修改即时存入本机；每 5 分钟自动备份一次云端（需已配置云同步）。</p>
     </div>`;
   $('#setProfile').onclick = openProfileModal;
