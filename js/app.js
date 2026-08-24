@@ -1913,7 +1913,7 @@ let syncBusy = false;
 let syncTimer = null;
 function scheduleAutoSync() {
   if (syncTimer) clearTimeout(syncTimer);
-  syncTimer = setTimeout(() => autoSyncPush(), 3000);
+  syncTimer = setTimeout(() => autoSyncPush(), 1500);
 }
 async function autoSyncPush() {
   const cfg = syncCfg();
@@ -1963,11 +1963,18 @@ async function autoSyncPull() {
     if (g.status === 200 && g.data && g.data.content) {
       const text = decodeURIComponent(escape(atob(g.data.content)));
       const payload = await syncDecrypt(text, cfg.pass);
-      Object.entries(payload.data || {}).forEach(([k, v]) => { localStorage.setItem(k, v); });
-      cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
-      setStore('wb.sync', cfg);
-      sessionStorage.setItem('wb_sync_pulled', '1');
-      location.reload();
+      const cloudTs = new Date(payload.time || 0).getTime() || 0;
+      const localTs = Number(getStore('wb.meta', { lastChange: 0 }).lastChange) || 0;
+      if (cloudTs > localTs) {
+        Object.entries(payload.data || {}).forEach(([k, v]) => { localStorage.setItem(k, v); });
+        RAW_SETSTORE('wb.meta', { lastChange: Date.now() });
+        cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
+        setStore('wb.sync', cfg);
+        sessionStorage.setItem('wb_sync_pulled', '1');
+        location.reload();
+      } else {
+        setSyncStatus('本地数据较新，未覆盖本地 ✅');
+      }
     }
   } catch (e) {
     setSyncStatus('❌ 云端数据拉取失败：请检查令牌或加密密码设置');
@@ -1975,13 +1982,12 @@ async function autoSyncPull() {
   }
   syncBusy = false;
 }
-{
-  const baseSetStore = setStore;
-  setStore = function (key, val) {
-    baseSetStore(key, val);
-    if (key !== 'wb.sync' && !syncBusy && window.syncReady) scheduleAutoSync();
-  };
-}
+const RAW_SETSTORE = setStore;
+setStore = function (key, val) {
+  RAW_SETSTORE(key, val);
+  if (key !== 'wb.meta') RAW_SETSTORE('wb.meta', { lastChange: Date.now() });
+  if (key !== 'wb.sync' && !syncBusy && window.syncReady) scheduleAutoSync();
+};
 
 /* ---------- 内容背景自定义 ---------- */
 function bgImage() { return getStore('wb.bgImage', null); }
