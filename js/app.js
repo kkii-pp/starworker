@@ -1911,6 +1911,7 @@ async function loadGoodsInfo(url) {
 /* ---------- 自动同步 ---------- */
 let syncBusy = false;
 let syncTimer = null;
+let syncPending = false;
 function scheduleAutoSync() {
   if (syncTimer) clearTimeout(syncTimer);
   syncTimer = setTimeout(() => autoSyncPush(), 1500);
@@ -1941,15 +1942,24 @@ async function autoSyncPush() {
       }
     }
     if (r.status === 200 || r.status === 201) {
+      syncPending = false;
       cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
+      cfg.lastPush = Date.now();
       setStore('wb.sync', cfg);
       setSyncStatus('✅ 已自动同步：' + cfg.lastSync);
       flashAutoSaved();
     } else {
-      setSyncStatus('❌ 自动上传失败：' + ((r.data && r.data.message) || r.status));
+      syncPending = true;
+      const msg = ((r.data && r.data.message) || r.status);
+      if (r.status === 401 || r.status === 403) {
+        setSyncStatus('❌ 上传失败：令牌无效或已被撤销，请到云同步更新令牌（数据已保存在本机）');
+      } else {
+        setSyncStatus('📡 上传失败（' + msg + '）：数据已保存在本机，网络恢复后自动重试');
+      }
     }
   } catch (e) {
-    setSyncStatus('❌ 自动上传失败：网络异常');
+    syncPending = true;
+    setSyncStatus('📡 网络异常：数据已保存在本机，网络恢复后自动上传');
   }
   syncBusy = false;
 }
@@ -2179,7 +2189,7 @@ function renderSettings() {
         <button class="btn btn-sm btn-primary" id="syncUp">⬆ 上传到云端</button>
         <button class="btn btn-sm" id="syncDown">⬇ 从云端下载</button>
       </div>
-      <p class="rss-note" id="syncStatus" style="margin-top:8px">${syncCfg().lastSync ? '上次同步：' + esc(syncCfg().lastSync) : '已开启自动同步：打开页面自动拉取云端数据，改动后约 3 秒自动上传。电脑和手机都需要各填一次相同的用户名/仓库/令牌/加密密码（令牌在网页上创建，不用装软件）。'}</p>
+      <p class="rss-note" id="syncStatus" style="margin-top:8px">${syncCfg().lastSync ? '上次同步：' + esc(syncCfg().lastSync) : '离线优先：数据永远先保存在本机浏览器；改动后约 1.5 秒自动上传云端，网络异常时排队等待，网络恢复后自动补传。电脑和手机各填一次相同的用户名/仓库/令牌/加密密码即可。'}</p>
     </div>
     <div class="card">
       <h3>🗄️ 数据管理 <span class="sub">待办、喝水、学习记录等保存在浏览器本地</span></h3>
@@ -2538,6 +2548,17 @@ function init() {
     if (cfg.owner && cfg.repo && cfg.token) autoSyncPush();
     else flashAutoSaved();
   }, 300000);
+  /* 离线重试：网络恢复或每 45 秒自动补传 */
+  window.addEventListener('online', () => { if (syncPending) autoSyncPush(); });
+  setInterval(() => { if (syncPending) autoSyncPush(); }, 45000);
+  /* 打开页面时，若本机有未上传的新改动则补传一次 */
+  {
+    const cfg0 = syncCfg();
+    const localTs0 = Number(getStore('wb.meta', { lastChange: 0 }).lastChange) || 0;
+    if (cfg0.owner && cfg0.repo && cfg0.token && localTs0 > (cfg0.lastPush || 0)) {
+      setTimeout(() => autoSyncPush(), 2500);
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
