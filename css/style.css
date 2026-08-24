@@ -486,6 +486,12 @@ table.fin tr:last-child td{border-bottom:none}
   background:#39313c;color:#fff;padding:11px 20px;border-radius:999px;font-size:13.5px;
   box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:88vw;text-align:center;animation:toastIn .25s ease;
 }
+#autosaveBadge{
+  position:fixed;right:14px;bottom:14px;z-index:400;background:#39313c;color:#fff;
+  font-size:12px;padding:7px 14px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.22);
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none;
+}
+#autosaveBadge.show{opacity:1;transform:none}
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
 
 /* 星星人动画 */
