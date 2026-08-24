@@ -52,12 +52,28 @@ function setStore(key, val) {
 }
 
 let toastTimer = null;
+let lastAutoSave = null;
 function toast(msg, ms) {
   const t = $('#toast');
   t.textContent = msg;
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { t.hidden = true; }, ms || 2200);
+}
+
+function flashAutoSaved() {
+  const now = new Date();
+  lastAutoSave = now;
+  let el = $('#autosaveBadge');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'autosaveBadge';
+    document.body.appendChild(el);
+  }
+  el.textContent = '💾 已自动保存 ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
 function confirmDlg(title, text, onOk) {
@@ -1928,6 +1944,7 @@ async function autoSyncPush() {
       cfg.lastSync = new Date().toLocaleString('zh-CN', { hour12: false });
       setStore('wb.sync', cfg);
       setSyncStatus('✅ 已自动同步：' + cfg.lastSync);
+      flashAutoSaved();
     } else {
       setSyncStatus('❌ 自动上传失败：' + ((r.data && r.data.message) || r.status));
     }
@@ -2167,6 +2184,7 @@ function renderSettings() {
       </div>
       <input type="file" id="importFile" accept="application/json" hidden>
       <p class="rss-note" style="margin-top:8px">版本 v${APP_VERSION} · 手机访问：和电脑连同一 Wi-Fi，启动 start.bat 后用手机浏览器打开显示的网址（或扫 outputs 里的二维码）。</p>
+      <p class="rss-note" style="margin-top:6px">💾 自动保存已开启：修改即时存入本机；每 5 分钟自动备份一次云端（需已配置云同步）。</p>
     </div>`;
   $('#setProfile').onclick = openProfileModal;
   const achDateInput = $('#achDate');
@@ -2459,6 +2477,21 @@ function init() {
   }
 
   bindModalClose();
+  /* 自动保存：边打字边保存（防抖） */
+  let saveDeb = null;
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (!el || (el.tagName !== 'TEXTAREA' && el.tagName !== 'INPUT')) return;
+    if (el.id === 'engNote') {
+      clearTimeout(saveDeb);
+      saveDeb = setTimeout(() => {
+        const s = engState(todayStr());
+        s.note = el.value;
+        setStore('wb.english.' + todayStr(), s);
+        flashAutoSaved();
+      }, 800);
+    }
+  });
   $('#pfSave').onclick = () => {
     const birth = $('#pfBirth').value;
     if (!birth) { toast('请选择出生日期'); return; }
@@ -2493,6 +2526,12 @@ function init() {
   } else {
     autoSyncPull();
   }
+  /* 每 5 分钟自动保存/云端备份 */
+  setInterval(() => {
+    const cfg = syncCfg();
+    if (cfg.owner && cfg.repo && cfg.token) autoSyncPush();
+    else flashAutoSaved();
+  }, 300000);
 }
 
 document.addEventListener('DOMContentLoaded', init);
