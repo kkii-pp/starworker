@@ -1,5 +1,5 @@
 /* ================= 静态数据：内容库 v2 ================= */
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "3.0.0";
 
 const EXERCISE_SUGGESTIONS = [
   "快走 30 分钟（约 120 千卡）",
